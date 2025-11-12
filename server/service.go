@@ -38,7 +38,7 @@ func NewService() (*Service, error) {
 func (s *Service) Start() error {
 	const op errors.Op = "server.Service.Start"
 	if s == nil {
-		return errors.New(op).Msg("nil server")
+		return errors.New(op).Msg(errMsgNilService)
 	}
 
 	if err := s.db.Open(); err != nil {
@@ -55,7 +55,7 @@ func (s *Service) Start() error {
 func (s *Service) Shutdown() error {
 	const op errors.Op = "server.Service.Shutdown"
 	if s == nil {
-		return errors.New(op).Msg("nil server")
+		return errors.New(op).Msg(errMsgNilService)
 	}
 
 	if err := s.db.Close(); err != nil {

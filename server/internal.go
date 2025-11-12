@@ -14,7 +14,7 @@ import (
 func (s *Service) initialize() error {
 	const op errors.Op = "server.Service.initialize"
 	if s == nil {
-		return errors.New(op).Msg("nil server")
+		return errors.New(op).Msg(errMsgNilService)
 	}
 	if err := s.initializeContainer(); err != nil {
 		return errors.New(op).Err(err).Msg("Failed to initialize container")
@@ -30,7 +30,7 @@ func (s *Service) initialize() error {
 func (s *Service) initializeContainer() error {
 	const op errors.Op = "server.Service.initializeContainer"
 	if s == nil {
-		return errors.New(op).Msg("nil server")
+		return errors.New(op).Msg(errMsgNilService)
 	}
 
 	s.container = iocdi.New()
@@ -61,13 +61,22 @@ func (s *Service) initializeContainer() error {
 func (s *Service) initializeGoFiber() error {
 	const op errors.Op = "server.Service.initializeGoFiber"
 	if s == nil {
-		return errors.New(op).Msg("nil server")
+		return errors.New(op).Msg(errMsgNilService)
 	}
 
 	s.app = fiber.New()
 	apiRoutes := s.app.Group("/api")
 	versionOneRoutes := apiRoutes.Group("/v1")
 	versionOneRoutes.Post("/register", s.addLogbookHandler())
+
+	return nil
+}
+
+func (s *Service) resolveDatabase() error {
+	const op errors.Op = "server.Service.resolveDatabase"
+	if s == nil {
+		return errors.New(op).Msg(errMsgNilService)
+	}
 
 	return nil
 }
