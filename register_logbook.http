@@ -1,0 +1,11 @@
+### GET request to example server
+POST http://localhost:3000/api/v1/register
+Content-Type: application/json
+Authorization: Bearer DEV_ACCESS_TOKEN
+
+{
+  "name": "Default HF2",
+  "description": "Test Logbook",
+  "callsign": "N0CALL"
+}
+###
