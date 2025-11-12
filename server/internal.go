@@ -72,11 +72,38 @@ func (s *Service) initializeGoFiber() error {
 	return nil
 }
 
-func (s *Service) resolveDatabase() error {
+func (s *Service) resolveAndSetDatabaseService() (*database.Service, error) {
 	const op errors.Op = "server.Service.resolveDatabase"
 	if s == nil {
-		return errors.New(op).Msg(errMsgNilService)
+		return nil, errors.New(op).Msg(errMsgNilService)
 	}
 
-	return nil
+	obj, err := s.container.ResolveSafe(database.ServiceName)
+	if err != nil {
+		return nil, errors.New(op).Err(err).Msg("Failed to resolve database service")
+	}
+	dbSvc, ok := obj.(*database.Service)
+	if !ok {
+		return nil, errors.New(op).Msg("Failed to cast database service")
+	}
+
+	return dbSvc, nil
+}
+
+func (s *Service) resolveAndSetLoggingService() (*logging.Service, error) {
+	const op errors.Op = "server.Service.resolveLogging"
+	if s == nil {
+		return nil, errors.New(op).Msg(errMsgNilService)
+	}
+
+	obj, err := s.container.ResolveSafe(logging.ServiceName)
+	if err != nil {
+		return nil, errors.New(op).Err(err).Msg("Failed to resolve logging service")
+	}
+	logSvc, ok := obj.(*logging.Service)
+	if !ok {
+		return nil, errors.New(op).Msg("Failed to cast logging service")
+	}
+
+	return logSvc, nil
 }

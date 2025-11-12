@@ -4,12 +4,14 @@ import (
 	"github.com/Station-Manager/database"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
+	"github.com/Station-Manager/logging"
 	"github.com/gofiber/fiber/v2"
 )
 
 type Service struct {
 	container *iocdi.Container
 	db        *database.Service
+	logger    *logging.Service
 	app       *fiber.App
 }
 
@@ -17,20 +19,18 @@ func NewService() (*Service, error) {
 	const op errors.Op = "server.NewService"
 	svc := &Service{}
 
-	if err := svc.initialize(); err != nil {
+	var err error
+	if err = svc.initialize(); err != nil {
 		return nil, errors.New(op).Err(err)
 	}
 
-	obj, err := svc.container.ResolveSafe(database.ServiceName)
-	if err != nil {
-		return nil, errors.New(op).Err(err).Msg("Failed to resolve database service")
-	}
-	dbSvc, ok := obj.(*database.Service)
-	if !ok {
-		return nil, errors.New(op).Msg("Failed to cast database service")
+	if svc.db, err = svc.resolveAndSetDatabaseService(); err != nil {
+		return nil, errors.New(op).Err(err)
 	}
 
-	svc.db = dbSvc
+	if svc.logger, err = svc.resolveAndSetLoggingService(); err != nil {
+		return nil, errors.New(op).Err(err)
+	}
 
 	return svc, nil
 }
@@ -59,7 +59,11 @@ func (s *Service) Shutdown() error {
 	}
 
 	if err := s.db.Close(); err != nil {
-		return errors.New(op).Err(err).Msg("Failed to open database")
+		s.logger.ErrorWith().Err(err).Msg("Failed to close database")
+	}
+
+	if err := s.logger.Close(); err != nil {
+		// What to do here?
 	}
 
 	return s.app.Shutdown()
