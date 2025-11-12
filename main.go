@@ -31,37 +31,3 @@ func main() {
 		panic(err)
 	}
 }
-
-//func defaultAppConfig() types.AppConfig {
-//	return types.AppConfig{
-//		DatastoreConfig: types.DatastoreConfig{
-//			Driver:                    database.PostgresDriver,
-//			Host:                      "localhost",
-//			Port:                      5432,
-//			User:                      "smuser",
-//			Password:                  "1q2w3e4r",
-//			Database:                  "station_manager",
-//			SSLMode:                   "disable",
-//			MaxOpenConns:              10,
-//			MaxIdleConns:              10,
-//			ConnMaxLifetime:           10,
-//			ConnMaxIdleTime:           5,
-//			ContextTimeout:            20,
-//			TransactionContextTimeout: 10,
-//		},
-//
-//		LoggingConfig: types.LoggingConfig{
-//			Level:                  "debug",
-//			WithTimestamp:          true,
-//			ConsoleLogging:         true,
-//			FileLogging:            false,
-//			RelLogFileDir:          "logs",
-//			SkipFrameCount:         3,
-//			LogFileMaxSizeMB:       100,
-//			LogFileMaxAgeDays:      30,
-//			LogFileMaxBackups:      5,
-//			ShutdownTimeoutMS:      10000,
-//			ShutdownTimeoutWarning: true,
-//		},
-//	}
-//}
