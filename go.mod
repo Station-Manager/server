@@ -62,11 +62,3 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.40.0 // indirect
 )
-
-replace github.com/Station-Manager/apikey => ../apikey
-
-replace github.com/Station-Manager/database => ../database
-
-replace github.com/Station-Manager/errors => ../errors
-
-replace github.com/Station-Manager/types => ../types
