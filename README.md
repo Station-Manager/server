@@ -55,3 +55,6 @@ Security notes
 - Use TLS end‑to‑end. Treat the full API key as sensitive and display it only once on creation.
 - Prefer `uid` as the external logbook identifier rather than names or callsigns.
 - Consider HMAC with a server‑side pepper to further harden digest storage; keep the pepper out of the database.
+
+See also
+- API key high‑level design: ../apikey/README.md
