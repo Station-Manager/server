@@ -4,7 +4,7 @@ Content-Type: application/json
 Authorization: Bearer DEV_ACCESS_TOKEN
 
 {
-  "name": "Default HF",
+  "name": "Default HF01",
   "description": "Test Logbook",
   "callsign": "N0CALL"
 }

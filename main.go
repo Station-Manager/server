@@ -8,6 +8,7 @@ import (
 )
 
 func init() {
+	// Ensure the default database is set to PostgreSQL
 	if err := os.Setenv(config.EnvSmDefaultDB, "pg"); err != nil {
 		panic(err)
 	}

@@ -10,7 +10,6 @@ import (
 func (s *Service) addLogbookHandler() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		s.logger.DebugWith().Msg("Registering a new logbook")
-
 		token := c.Get(fiber.HeaderAuthorization)
 
 		fmt.Println("Token:", token)
