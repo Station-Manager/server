@@ -1,11 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"github.com/Station-Manager/apikey"
 	"github.com/Station-Manager/types"
 	"github.com/gofiber/fiber/v2"
 	"strings"
+	"time"
 )
 
 func (s *Service) addLogbookHandler() fiber.Handler {
@@ -39,18 +39,18 @@ func (s *Service) addLogbookHandler() fiber.Handler {
 		var user types.User
 		if isBootstrap {
 			if user, err = s.db.FetchUserByCallsign(callsign); err != nil {
-				// TODO: log error
+				s.logger.ErrorWith().Err(err).Str("callsign", callsign).Msg("s.db.FetchUserByCallsign")
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 			}
 
 			var valid bool
 			valid, err = apikey.ValidateBootstrap(token, user.BootstrapHash)
 			if err != nil {
-				// TODO: log error
+				s.logger.ErrorWith().Err(err).Str("token", token).Msg("apikey.ValidateBootstrap")
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 			}
 			if !valid {
-				//TODO: log error
+				s.logger.InfoWith().Str("token", token).Msg("Invalid bootstrap token")
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 			}
 		}
@@ -67,23 +67,29 @@ func (s *Service) addLogbookHandler() fiber.Handler {
 		// Create the logbook in the database
 		typeLogbook, err = s.db.InsertLogbookContext(c.UserContext(), typeLogbook)
 		if err != nil {
-			s.logger.ErrorWith().Err(err).Msg("Database error")
+			s.logger.ErrorWith().Err(err).Msg("s.db.InsertLogbookContext")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 		}
 
 		// Generate a new API key for the logbook
 		fullKey, prefix, hash, err := apikey.Generate(10)
 		if err != nil {
-			s.logger.ErrorWith().Msg("Key generation failed")
+			s.logger.ErrorWith().Err(err).Msg("apikey.Generate")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "key generation failed"})
 		}
 
 		if err = s.db.InsertAPIKey(typeLogbook.Name, prefix, hash, typeLogbook.ID); err != nil {
-			s.logger.ErrorWith().Err(err).Msg("Database error")
+			s.logger.ErrorWith().Err(err).Msg("s.db.InsertAPIKey")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 		}
 
-		fmt.Println("Generated full key: ", fullKey)
+		user.BootstrapHash = ""
+		user.BootstrapUsedAt = time.Now().UTC()
+
+		if err = s.db.UpdateUserContext(c.UserContext(), user); err != nil {
+			s.logger.ErrorWith().Err(err).Interface("types.User", user).Msg("s.db.UpdateUserContext")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
+		}
 
 		// Return the full key to the client as a one-off deal
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"api_key": fullKey})
