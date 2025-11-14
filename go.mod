@@ -3,18 +3,19 @@ module github.com/Station-Manager/server
 go 1.25
 
 require (
+	github.com/Station-Manager/apikey v0.0.3
 	github.com/Station-Manager/config v0.0.7
-	github.com/Station-Manager/database v0.0.7
-	github.com/Station-Manager/errors v0.0.3
+	github.com/Station-Manager/database v0.0.9
+	github.com/Station-Manager/errors v0.0.4
 	github.com/Station-Manager/iocdi v0.0.1
-	github.com/Station-Manager/logging v0.0.3
-	github.com/Station-Manager/utils v0.0.1
+	github.com/Station-Manager/logging v0.0.4
+	github.com/Station-Manager/types v0.0.15
+	github.com/Station-Manager/utils v0.0.2
 	github.com/gofiber/fiber/v2 v2.52.9
 )
 
 require (
-	github.com/Station-Manager/adapters v0.0.7 // indirect
-	github.com/Station-Manager/types v0.0.11 // indirect
+	github.com/Station-Manager/adapters v0.0.9 // indirect
 	github.com/aarondl/inflect v0.0.2 // indirect
 	github.com/aarondl/null/v8 v8.1.3 // indirect
 	github.com/aarondl/randomize v0.0.2 // indirect
@@ -51,7 +52,7 @@ require (
 	github.com/valyala/fasthttp v1.68.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.44.0 // indirect
-	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
+	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect

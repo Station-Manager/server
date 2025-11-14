@@ -1,11 +1,12 @@
 ### GET request to example server
 POST http://localhost:3000/api/v1/register
 Content-Type: application/json
-Authorization: Bearer DEV_ACCESS_TOKEN
+X-Callsign: 7Q5MLV
+Authorization: Bootstrap be2165052bbbf03c524685919f33eac76b5c29138c1f583c0eec9a396bbac06c
 
 {
-  "name": "Default HF01",
+  "name": "Default HF",
   "description": "Test Logbook",
-  "callsign": "N0CALL"
+  "callsign": "7Q5MLV"
 }
 ###
