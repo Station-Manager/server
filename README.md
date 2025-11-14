@@ -5,7 +5,7 @@ This document describes, at a high level, how the server handles logbook registr
 Scope and goals
 - Prevent unauthorised modification while storing public‑domain QSO data.
 - Each QSO belongs to exactly one logbook.
-- Each logbook has its own API key; clients must present that key plus the logbook’s identifier in requests.
+- Each logbook has its own API key; clients must present that key plus the logbook’s `uid` in requests.
 - The logging station callsign must match the logbook’s callsign. The contacted station callsign (the QSO "call") is unconstrained relative to the logbook’s callsign.
 
 Identifiers
