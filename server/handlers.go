@@ -62,6 +62,8 @@ func (s *Service) addLogbookHandler() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 		}
 
+		typeLogbook.UserID = user.ID // FK contraint
+
 		// Create the logbook in the database
 		typeLogbook, err = s.db.InsertLogbookContext(c.UserContext(), typeLogbook)
 		if err != nil {

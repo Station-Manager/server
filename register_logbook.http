@@ -2,7 +2,7 @@
 POST http://localhost:3000/api/v1/register
 Content-Type: application/json
 X-Callsign: 7Q5MLV
-Authorization: Bootstrap be2165052bbbf03c524685919f33eac76b5c29138c1f583c0eec9a396bbac06c
+Authorization: Bootstrap ff44d979c7fc9e555115968bc7de7b1c2a66e454a78ef5e92bd3d43f4896d689
 
 {
   "name": "Default HF",
