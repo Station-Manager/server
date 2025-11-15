@@ -6,13 +6,15 @@ import (
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
 	"github.com/Station-Manager/types"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 type requestData struct {
-	IsValid bool
-	Action  types.RequestAction
-	Data    string
+	IsValid   bool
+	Action    types.RequestAction
+	Data      string
+	LogbookID int64
 }
 
 type Service struct {
@@ -20,6 +22,7 @@ type Service struct {
 	db        *database.Service
 	logger    *logging.Service
 	app       *fiber.App
+	validate  *validator.Validate
 }
 
 // NewService creates a new server instance and initializes all its dependencies.
@@ -43,6 +46,7 @@ func NewService() (*Service, error) {
 	return svc, nil
 }
 
+// Start starts the server.
 func (s *Service) Start() error {
 	const op errors.Op = "server.Service.Start"
 	if s == nil {

@@ -7,11 +7,13 @@ import (
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
 	"github.com/Station-Manager/utils"
+	"github.com/go-playground/validator/v10"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"reflect"
 )
 
+// initialize sets up the necessary components of the Service, including the container, GoFiber instance, and validator.
 func (s *Service) initialize() error {
 	const op errors.Op = "server.Service.initialize"
 	if s == nil {
@@ -24,6 +26,8 @@ func (s *Service) initialize() error {
 	if err := s.initializeGoFiber(); err != nil {
 		return errors.New(op).Err(err).Msg("Failed to initialize goFiber")
 	}
+
+	s.validate = validator.New(validator.WithRequiredStructEnabled())
 
 	return nil
 }

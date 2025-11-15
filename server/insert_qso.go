@@ -28,7 +28,13 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// TODO: validate qso
+	qso.LogbookID = reqData.LogbookID
+
+	if err := s.validate.Struct(qso); err != nil {
+		err = errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(err).Msg("Validation failed")
+		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
+	}
 
 	fmt.Println(qso)
 

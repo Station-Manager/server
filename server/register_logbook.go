@@ -29,7 +29,11 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 
 	// 1. Validate the logbook data
-	// TODO: validate logbook
+	if err := s.validate.Struct(logbook); err != nil {
+		err = errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(err).Msg("Validation failed")
+		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
+	}
 
 	// 2. Associated the logbook with the user.
 	user, ok := c.Locals(localsUserDataKey).(types.User)

@@ -45,6 +45,7 @@ func (s *Service) basicChecks() fiber.Handler {
 		}
 
 		var valid bool
+		var logbookId int64
 		// Registering a logbook requires the user's password, not the api key
 		// as the api key is a per-logbook key
 		if request.Action == types.RegisterLogbookAction {
@@ -64,7 +65,7 @@ func (s *Service) basicChecks() fiber.Handler {
 			// This is only needed when registering a logbook
 			c.Locals(localsUserDataKey, user)
 		} else {
-			if valid, err = s.isValidApiKey(request.Key); err != nil {
+			if valid, logbookId, err = s.isValidApiKey(request.Key); err != nil {
 				err = errors.New(op).Err(err)
 				s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey")
 				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
@@ -73,9 +74,10 @@ func (s *Service) basicChecks() fiber.Handler {
 
 		// 5. Store the request data in the context
 		c.Locals(localsRequestDataKey, requestData{
-			IsValid: valid,
-			Action:  request.Action,
-			Data:    request.Data,
+			IsValid:   valid,
+			Action:    request.Action,
+			Data:      request.Data,
+			LogbookID: logbookId,
 		})
 
 		return c.Next()
@@ -131,28 +133,34 @@ func (s *Service) isValidateAction(action types.RequestAction) (bool, error) {
 }
 
 // isValidApiKey validates an API key by checking its prefix and hashed value against the stored database records.
-func (s *Service) isValidApiKey(fullKey string) (bool, error) {
+// Returns the logbook ID if the key is valid.
+func (s *Service) isValidApiKey(fullKey string) (bool, int64, error) {
 	const op errors.Op = "server.Service.isValidApiKey"
 	if fullKey == emptyString {
-		return false, errors.New(op).Msg("API key is empty")
+		return false, 0, errors.New(op).Msg("API key is empty")
 	}
 
 	prefix, _, err := apikey.ParseApiKey(fullKey)
 	if err != nil {
-		return false, errors.New(op).Err(err)
+		return false, 0, errors.New(op).Err(err)
 	}
 
 	model, err := s.db.FetchAPIKeyByPrefix(prefix)
 	if err != nil {
-		return false, errors.New(op).Err(err)
+		return false, 0, errors.New(op).Err(err)
 	}
 
 	valid, err := apikey.ValidateApiKey(fullKey, model.KeyHash)
 	if err != nil {
-		return false, errors.New(op).Err(err)
+		return false, 0, errors.New(op).Err(err)
 	}
 
-	return valid, nil
+	// Sanity check
+	if model.LogbookID == 0 {
+		return false, 0, errors.New(op).Msg("Logbook ID is zero")
+	}
+
+	return valid, model.LogbookID, nil
 }
 
 // isValidPassword checks if a password matches the hashed value stored in the database.
