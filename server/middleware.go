@@ -31,14 +31,6 @@ func (s *Service) basicChecks() fiber.Handler {
 			return err
 		}
 
-		// 3. Find the user
-		user, err := s.fetchUser(request.Callsign)
-		if err != nil {
-			err = errors.New(op).Err(err)
-			s.logger.ErrorWith().Err(err).Msg("s.fetchUser")
-			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-		}
-
 		// 4. Check for a valid action
 		isValidAction, err := s.isValidateAction(request.Action)
 		if err != nil {
@@ -56,11 +48,21 @@ func (s *Service) basicChecks() fiber.Handler {
 		// Registering a logbook requires the user's password, not the api key
 		// as the api key is a per-logbook key
 		if request.Action == types.RegisterLogbookAction {
+			user, err := s.fetchUser(request.Callsign)
+			if err != nil {
+				err = errors.New(op).Err(err)
+				s.logger.ErrorWith().Err(err).Msg("s.fetchUser")
+				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+			}
+
 			if valid, err = s.isValidPassword(user.PassHash, request.Key); err != nil {
 				err = errors.New(op).Err(err)
 				s.logger.ErrorWith().Err(err).Msg("s.isValidPassword")
 				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
 			}
+
+			// This is only needed when registering a logbook
+			c.Locals(localsUserDataKey, user)
 		} else {
 			if valid, err = s.isValidApiKey(request.Key); err != nil {
 				err = errors.New(op).Err(err)
@@ -76,13 +78,11 @@ func (s *Service) basicChecks() fiber.Handler {
 			Data:    request.Data,
 		})
 
-		// 6. Store the user in the context
-		c.Locals(localsUserDataKey, user)
-
 		return c.Next()
 	}
 }
 
+// fetchUser fetches a user from the database by their callsign.
 func (s *Service) fetchUser(callsign string) (types.User, error) {
 	const op errors.Op = "server.Service.fetchUser"
 	emptyRetVal := types.User{}
@@ -123,20 +123,39 @@ func (s *Service) isValidateAction(action types.RequestAction) (bool, error) {
 	switch action {
 	case types.RegisterLogbookAction:
 		return true, nil
+	case types.InsertQsoAction:
+		return true, nil
 	default:
 		return false, errors.New(op).Errorf("Unknown action: %s", action)
 	}
 }
 
-func (s *Service) isValidApiKey(apiKey string) (bool, error) {
+// isValidApiKey validates an API key by checking its prefix and hashed value against the stored database records.
+func (s *Service) isValidApiKey(fullKey string) (bool, error) {
 	const op errors.Op = "server.Service.isValidApiKey"
-	if apiKey == emptyString {
+	if fullKey == emptyString {
 		return false, errors.New(op).Msg("API key is empty")
 	}
 
-	return false, nil
+	prefix, _, err := apikey.ParseApiKey(fullKey)
+	if err != nil {
+		return false, errors.New(op).Err(err)
+	}
+
+	model, err := s.db.FetchAPIKeyByPrefix(prefix)
+	if err != nil {
+		return false, errors.New(op).Err(err)
+	}
+
+	valid, err := apikey.ValidateApiKey(fullKey, model.KeyHash)
+	if err != nil {
+		return false, errors.New(op).Err(err)
+	}
+
+	return valid, nil
 }
 
+// isValidPassword checks if a password matches the hashed value stored in the database.
 func (s *Service) isValidPassword(hash, pass string) (bool, error) {
 	const op errors.Op = "server.Service.isValidPassword"
 	if pass == emptyString || hash == emptyString {
@@ -149,6 +168,7 @@ func (s *Service) isValidPassword(hash, pass string) (bool, error) {
 	return valid, nil
 }
 
+// validatePostRequest validates the request body for a POST request.
 func validatePostRequest(op errors.Op, req types.PostRequest) error {
 	if req.Action == emptyString {
 		return errors.New(op).Msg("Action is empty")

@@ -31,6 +31,8 @@ func (s *Service) postDispatcherHandler() fiber.Handler {
 		}
 
 		switch state.Action {
+		case types.InsertQsoAction:
+			return s.insertQsoAction(c)
 		case types.RegisterLogbookAction:
 			return s.registerLogbookAction(c)
 		default:

@@ -49,8 +49,9 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// Quick sanity check
 	if logbook.ID == 0 {
-		err := errors.New(op).Msg("Logbook ID was not set")
+		err = errors.New(op).Msg("Logbook ID was not set")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
@@ -63,6 +64,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// 5. Store the API key in the database.
 	if err = s.db.InsertAPIKey(logbook.Callsign, prefix, hash, logbook.ID); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("s.db.InsertAPIKey")
