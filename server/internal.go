@@ -7,6 +7,7 @@ import (
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
 	"github.com/Station-Manager/utils"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"reflect"
 )
@@ -64,10 +65,19 @@ func (s *Service) initializeGoFiber() error {
 		return errors.New(op).Msg(errMsgNilService)
 	}
 
-	s.app = fiber.New()
-	apiRoutes := s.app.Group("/api")
-	versionOneRoutes := apiRoutes.Group("/v1")
-	versionOneRoutes.Post("/register", s.addLogbookHandler())
+	s.app = fiber.New(fiber.Config{
+		JSONDecoder: json.Unmarshal,
+		JSONEncoder: json.Marshal,
+	})
+
+	// Our middleware for basic/common request checking
+	s.app.Use(s.basicChecks())
+
+	// Our base route
+	apiRoutes := s.app.Group("/api/v1")
+
+	// Every request goes to the dispatcherHandler.
+	apiRoutes.Post("/", s.postDispatcherHandler())
 
 	return nil
 }

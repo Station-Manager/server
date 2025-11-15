@@ -1,0 +1,11 @@
+### GET request to example server
+POST https://localhost:3000/api/v1
+Content-Type: application/json
+
+{
+  "callsign": "7Q5MLV",
+  "key": "417bd3c26b_VJ3B-VVMF-9T7T-EHTZ-VE5V",
+  "action": "insert_qso",
+  "data": "{}"
+}
+###

@@ -1,12 +1,11 @@
-### GET request to example server
-POST http://localhost:3000/api/v1/register
+### POST request: register first logbook
+POST http://localhost:3000/api/v1
 Content-Type: application/json
-X-Callsign: 7Q5MLV
-Authorization: Bootstrap ff44d979c7fc9e555115968bc7de7b1c2a66e454a78ef5e92bd3d43f4896d689
 
 {
-  "name": "Default HF",
-  "description": "Test Logbook",
-  "callsign": "7Q5MLV"
+  "callsign": "7Q5MLV",
+  "key": "1q2w3e4r",
+  "action": "register_logbook",
+  "data": "{\"name\": \"Default HF\",\"callsign\": \"7Q5MLV\",\"description\": \"My primary HF logbook\"}"
 }
 ###
