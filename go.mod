@@ -3,19 +3,21 @@ module github.com/Station-Manager/server
 go 1.25
 
 require (
-	github.com/Station-Manager/apikey v0.0.3
+	github.com/Station-Manager/adapters v0.0.9
+	github.com/Station-Manager/apikey v0.0.4
 	github.com/Station-Manager/config v0.0.7
 	github.com/Station-Manager/database v0.0.9
 	github.com/Station-Manager/errors v0.0.4
 	github.com/Station-Manager/iocdi v0.0.1
 	github.com/Station-Manager/logging v0.0.4
-	github.com/Station-Manager/types v0.0.15
+	github.com/Station-Manager/types v0.0.18
 	github.com/Station-Manager/utils v0.0.2
+	github.com/go-playground/validator/v10 v10.28.0
+	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/fiber/v2 v2.52.9
 )
 
 require (
-	github.com/Station-Manager/adapters v0.0.9 // indirect
 	github.com/aarondl/inflect v0.0.2 // indirect
 	github.com/aarondl/null/v8 v8.1.3 // indirect
 	github.com/aarondl/randomize v0.0.2 // indirect
@@ -30,8 +32,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.28.0 // indirect
-	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang-migrate/migrate/v4 v4.19.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -58,7 +58,7 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	modernc.org/libc v1.66.10 // indirect
+	modernc.org/libc v1.67.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.40.0 // indirect
