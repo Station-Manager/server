@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/types"
 	"github.com/goccy/go-json"
@@ -36,7 +35,12 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
-	fmt.Println(qso)
+	var err error
+	if qso, err = s.db.InsertQso(qso); err != nil {
+		err = errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(err).Msg("InsertQso failed")
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Successful"})
 }
