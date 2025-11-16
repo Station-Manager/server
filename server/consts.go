@@ -6,6 +6,7 @@ const (
 
 const (
 	emptyString = ""
+	prefixLen   = 10
 )
 
 const (

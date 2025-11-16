@@ -63,10 +63,8 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 	defer txCancel()
 
-	txCtx := ctx
-
 	// Insert logbook inside transaction.
-	logbook, err = s.db.InsertLogbookWithTxContext(txCtx, tx, logbook)
+	logbook, err = s.db.InsertLogbookWithTxContext(ctx, tx, logbook)
 	if err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertLogbookWithTxContext")
@@ -81,7 +79,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 
 	// Generate API key.
-	fullKey, prefix, hash, err := apikey.GenerateApiKey(10)
+	fullKey, prefix, hash, err := apikey.GenerateApiKey(prefixLen)
 	if err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("apikey.GenerateApiKey")
@@ -90,7 +88,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 
 	// Insert API key within same transaction.
-	if err = s.db.InsertAPIKeyWithTxContext(txCtx, tx, logbook.Callsign, prefix, hash, logbook.ID); err != nil {
+	if err = s.db.InsertAPIKeyWithTxContext(ctx, tx, logbook.Callsign, prefix, hash, logbook.ID); err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertAPIKeyWithTxContext")
 		_ = tx.Rollback()

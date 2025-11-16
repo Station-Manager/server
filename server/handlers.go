@@ -18,9 +18,9 @@ func (s *Service) postDispatcherHandler() fiber.Handler {
 			return errors.New(op).Msg(errMsgNilContext)
 		}
 
-		state, ok := c.Locals(localsRequestDataKey).(requestData)
-		if !ok {
-			err := errors.New(op).Msg("Unable to cast locals to requestData")
+		state, err := getRequestData(c)
+		if err != nil {
+			err = errors.New(op).Err(err)
 			s.logger.ErrorWith().Err(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 		}

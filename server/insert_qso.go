@@ -13,30 +13,29 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return errors.New(op).Msg(errMsgNilContext)
 	}
 
-	reqData, ok := c.Locals(localsRequestDataKey).(requestData)
-	if !ok {
-		err := errors.New(op).Msg("Unable to cast locals to requestData")
+	state, err := getRequestData(c)
+	if err != nil {
+		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
 	var qso types.Qso
-	if err := json.Unmarshal([]byte(reqData.Data), &qso); err != nil {
+	if err = json.Unmarshal([]byte(state.Data), &qso); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("json.Unmarshal")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	qso.LogbookID = reqData.LogbookID
+	qso.LogbookID = state.LogbookID
 
 	// TODO: structured error codes for fields?
-	if err := s.validate.Struct(qso); err != nil {
+	if err = s.validate.Struct(qso); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
-	var err error
 	if qso, err = s.db.InsertQsoContext(c.UserContext(), qso); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("InsertQso failed")
