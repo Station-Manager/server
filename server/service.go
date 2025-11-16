@@ -71,13 +71,22 @@ func (s *Service) Shutdown() error {
 		return errors.New(op).Msg(errMsgNilService)
 	}
 
+	// Shutdown Fiber app first to stop accepting new requests
+	if err := s.app.Shutdown(); err != nil {
+		s.logger.ErrorWith().Err(err).Msg("Failed to shutdown Fiber app")
+		return errors.New(op).Err(err).Msg("s.app.Shutdown")
+	}
+
+	// Close database after all requests are done
 	if err := s.db.Close(); err != nil {
 		s.logger.ErrorWith().Err(err).Msg("Failed to close database")
+		return errors.New(op).Err(err).Msg("s.db.Close")
 	}
 
+	// Close logger last
 	if err := s.logger.Close(); err != nil {
-		// What to do here?
+		return errors.New(op).Err(err).Msg("s.logger.Close")
 	}
 
-	return s.app.Shutdown()
+	return nil
 }

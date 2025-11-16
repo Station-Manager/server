@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/Station-Manager/adapters"
 	"github.com/Station-Manager/adapters/converters/common"
 	"github.com/Station-Manager/apikey"
@@ -11,6 +12,10 @@ import (
 
 // basicChecks performs basic/common checks on the request context, returning early if any of them fail.
 func (s *Service) basicChecks() fiber.Handler {
+	if s == nil {
+		return serverErrorHandler()
+	}
+
 	return func(c *fiber.Ctx) error {
 		const op errors.Op = "server.Service.apiKeyCheck"
 		if c == nil {
@@ -28,11 +33,11 @@ func (s *Service) basicChecks() fiber.Handler {
 		// 2. Validate the request body that no fields are empty.
 		if err := validatePostRequest(op, request); err != nil {
 			s.logger.ErrorWith().Err(err).Msg("validatePostRequest")
-			return err
+			return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 		}
 
 		// 4. Check for a valid action
-		isValidAction, err := s.isValidateAction(request.Action)
+		isValidAction, err := s.isValidAction(request.Action)
 		if err != nil {
 			err = errors.New(op).Err(err)
 			s.logger.ErrorWith().Err(err).Msg("s.isValidateAction")
@@ -49,7 +54,7 @@ func (s *Service) basicChecks() fiber.Handler {
 		// Registering a logbook requires the user's password, not the api key
 		// as the api key is a per-logbook key
 		if request.Action == types.RegisterLogbookAction {
-			user, err := s.fetchUser(request.Callsign)
+			user, err := s.fetchUser(c.UserContext(), request.Callsign)
 			if err != nil {
 				err = errors.New(op).Err(err)
 				s.logger.ErrorWith().Err(err).Msg("s.fetchUser")
@@ -85,7 +90,7 @@ func (s *Service) basicChecks() fiber.Handler {
 }
 
 // fetchUser fetches a user from the database by their callsign.
-func (s *Service) fetchUser(callsign string) (types.User, error) {
+func (s *Service) fetchUser(ctx context.Context, callsign string) (types.User, error) {
 	const op errors.Op = "server.Service.fetchUser"
 	emptyRetVal := types.User{}
 	if s == nil {
@@ -95,7 +100,7 @@ func (s *Service) fetchUser(callsign string) (types.User, error) {
 		return emptyRetVal, errors.New(op).Msg("Callsign is empty")
 	}
 
-	model, err := s.db.FetchUserByCallsign(callsign)
+	model, err := s.db.FetchUserByCallsignContext(ctx, callsign)
 	if err != nil {
 		return emptyRetVal, errors.New(op).Err(err)
 	}
@@ -117,9 +122,9 @@ func (s *Service) fetchUser(callsign string) (types.User, error) {
 	return user, nil
 }
 
-// checkActionHeader checks the X-Action header and returns the corresponding action enum value.
+// isValidAction checks the Action field and returns the corresponding action enum value.
 // If the action is missing or invalid, an error is returned.
-func (s *Service) isValidateAction(action types.RequestAction) (bool, error) {
+func (s *Service) isValidAction(action types.RequestAction) (bool, error) {
 	const op errors.Op = "server.Service.checkActionHeader"
 
 	switch action {
@@ -145,6 +150,7 @@ func (s *Service) isValidApiKey(fullKey string) (bool, int64, error) {
 		return false, 0, errors.New(op).Err(err)
 	}
 
+	// TODO: context aware call
 	model, err := s.db.FetchAPIKeyByPrefix(prefix)
 	if err != nil {
 		return false, 0, errors.New(op).Err(err)
@@ -160,6 +166,9 @@ func (s *Service) isValidApiKey(fullKey string) (bool, int64, error) {
 		return false, 0, errors.New(op).Msg("Logbook ID is zero")
 	}
 
+	if !valid {
+		return false, 0, nil
+	}
 	return valid, model.LogbookID, nil
 }
 

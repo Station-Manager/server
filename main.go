@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"github.com/Station-Manager/config"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/server/server"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func init() {
@@ -15,6 +18,10 @@ func init() {
 }
 
 func main() {
+	// Create context that will be canceled on SIGINT/SIGTERM
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	svc, err := server.NewService()
 	if err != nil {
 		dErr, ok := errors.AsDetailedError(err)
@@ -24,11 +31,24 @@ func main() {
 		panic(dErr.Cause().Error())
 	}
 
-	if err = svc.Start(); err != nil {
-		panic(err)
-	}
+	// Start server in a goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- svc.Start()
+	}()
 
-	if err = svc.Shutdown(); err != nil {
-		panic(err)
+	// Wait for interrupt signal or server error
+	select {
+	case <-ctx.Done():
+		// Signal received, initiate graceful shutdown
+		stop() // Stop receiving more signals
+		if err := svc.Shutdown(); err != nil {
+			panic(err)
+		}
+	case err := <-errChan:
+		// Server error occurred
+		if err != nil {
+			panic(err)
+		}
 	}
 }

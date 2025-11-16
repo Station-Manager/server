@@ -11,7 +11,7 @@ import (
 func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	const op errors.Op = "server.Service.registerLogbookAction"
 	if c == nil {
-		return errors.New(op).Msg(errMsgNilService)
+		return errors.New(op).Msg(errMsgNilContext)
 	}
 
 	reqData, ok := c.Locals(localsRequestDataKey).(requestData)
@@ -45,6 +45,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 
 	logbook.UserID = user.ID
 
+	// TODO: Make this a transaction
 	// 3. Insert the logbook into the database.
 	var err error
 	if logbook, err = s.db.InsertLogbookContext(c.UserContext(), logbook); err != nil {
@@ -69,7 +70,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 
 	// 5. Store the API key in the database.
-	if err = s.db.InsertAPIKey(logbook.Callsign, prefix, hash, logbook.ID); err != nil {
+	if err = s.db.InsertAPIKeyContext(c.UserContext(), logbook.Callsign, prefix, hash, logbook.ID); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("s.db.InsertAPIKey")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
