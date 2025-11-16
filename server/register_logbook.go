@@ -42,37 +42,66 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
-
 	logbook.UserID = user.ID
 
-	// TODO: Make this a transaction
-	// 3. Insert the logbook into the database.
-	var err error
-	if logbook, err = s.db.InsertLogbookContext(c.UserContext(), logbook); err != nil {
-		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err).Msg("s.db.InsertLogbookContext")
-		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	ctx := c.UserContext()
+	if ctx == nil {
+		return errors.New(op).Msg(errMsgNilContext)
 	}
-
-	// Quick sanity check
-	if logbook.ID == 0 {
-		err = errors.New(op).Msg("Logbook ID was not set")
+	if s.db == nil {
+		err := errors.New(op).Msg("database service is nil")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// 4. Generate an API key for the logbook.
-	fullKey, prefix, hash, err := apikey.GenerateApiKey(10)
+	// Begin transaction for atomic logbook + API key creation.
+	tx, txCancel, err := s.db.BeginTxContext(ctx)
 	if err != nil {
-		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err).Msg("apikey.GenerateApiKey")
+		wrapped := errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(wrapped).Msg("s.db.BeginTxContext")
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
+	defer txCancel()
+
+	txCtx := ctx
+
+	// Insert logbook inside transaction.
+	logbook, err = s.db.InsertLogbookWithTxContext(txCtx, tx, logbook)
+	if err != nil {
+		wrapped := errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertLogbookWithTxContext")
+		_ = tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
+	if logbook.ID == 0 {
+		wrapped := errors.New(op).Msg("Logbook ID was not set")
+		s.logger.ErrorWith().Err(wrapped)
+		_ = tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// 5. Store the API key in the database.
-	if err = s.db.InsertAPIKeyContext(c.UserContext(), logbook.Callsign, prefix, hash, logbook.ID); err != nil {
-		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err).Msg("s.db.InsertAPIKey")
+	// Generate API key.
+	fullKey, prefix, hash, err := apikey.GenerateApiKey(10)
+	if err != nil {
+		wrapped := errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(wrapped).Msg("apikey.GenerateApiKey")
+		_ = tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
+
+	// Insert API key within same transaction.
+	if err = s.db.InsertAPIKeyWithTxContext(txCtx, tx, logbook.Callsign, prefix, hash, logbook.ID); err != nil {
+		wrapped := errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertAPIKeyWithTxContext")
+		_ = tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
+
+	// Commit transaction.
+	if err = tx.Commit(); err != nil {
+		wrapped := errors.New(op).Err(err)
+		s.logger.ErrorWith().Err(wrapped).Msg("tx.Commit")
+		_ = tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 

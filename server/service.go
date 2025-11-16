@@ -77,7 +77,7 @@ func (s *Service) Shutdown() error {
 		return errors.New(op).Err(err).Msg("s.app.Shutdown")
 	}
 
-	// Close database after all requests are done
+	// Close the database after all requests are done
 	if err := s.db.Close(); err != nil {
 		s.logger.ErrorWith().Err(err).Msg("Failed to close database")
 		return errors.New(op).Err(err).Msg("s.db.Close")
