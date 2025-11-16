@@ -54,7 +54,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// Begin transaction for atomic logbook + API key creation.
+	// Begin the transaction for atomic logbook + API key creation.
 	tx, txCancel, err := s.db.BeginTxContext(ctx)
 	if err != nil {
 		wrapped := errors.New(op).Err(err)

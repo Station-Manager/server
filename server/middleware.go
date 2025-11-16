@@ -70,7 +70,7 @@ func (s *Service) basicChecks() fiber.Handler {
 			// This is only needed when registering a logbook
 			c.Locals(localsUserDataKey, user)
 		} else {
-			if valid, logbookId, err = s.isValidApiKey(request.Key); err != nil {
+			if valid, logbookId, err = s.isValidApiKey(c.UserContext(), request.Key); err != nil {
 				err = errors.New(op).Err(err)
 				s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey")
 				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
@@ -139,8 +139,12 @@ func (s *Service) isValidAction(action types.RequestAction) (bool, error) {
 
 // isValidApiKey validates an API key by checking its prefix and hashed value against the stored database records.
 // Returns the logbook ID if the key is valid.
-func (s *Service) isValidApiKey(fullKey string) (bool, int64, error) {
+func (s *Service) isValidApiKey(ctx context.Context, fullKey string) (bool, int64, error) {
 	const op errors.Op = "server.Service.isValidApiKey"
+	if ctx == nil {
+		return false, 0, errors.New(op).Msg(errMsgNilContext)
+	}
+
 	if fullKey == emptyString {
 		return false, 0, errors.New(op).Msg("API key is empty")
 	}
@@ -151,7 +155,7 @@ func (s *Service) isValidApiKey(fullKey string) (bool, int64, error) {
 	}
 
 	// TODO: context aware call
-	model, err := s.db.FetchAPIKeyByPrefix(prefix)
+	model, err := s.db.FetchAPIKeyByPrefixContext(ctx, prefix)
 	if err != nil {
 		return false, 0, errors.New(op).Err(err)
 	}
