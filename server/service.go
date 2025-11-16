@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/Station-Manager/database"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
@@ -23,6 +24,7 @@ type Service struct {
 	container *iocdi.Container
 	db        *database.Service
 	logger    *logging.Service
+	config    types.ServerConfig
 	app       *fiber.App
 	validate  *validator.Validate
 }
@@ -45,6 +47,10 @@ func NewService() (*Service, error) {
 		return nil, errors.New(op).Err(err)
 	}
 
+	if svc.config, err = svc.resolveAndSetServerConfig(); err != nil {
+		return nil, errors.New(op).Err(err)
+	}
+
 	return svc, nil
 }
 
@@ -64,9 +70,15 @@ func (s *Service) Start() error {
 		return errors.New(op).Err(err).Msg("Failed to migrate database")
 	}
 
-	return s.app.Listen(":3000")
+	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
+	if s.config.TLSEnabled {
+		return s.app.ListenTLS(addr, s.config.TLSCertFile, s.config.TLSKeyFile)
+	} else {
+		return s.app.Listen(addr)
+	}
 }
 
+// Shutdown gracefully terminates the service by shutting down the server, closing database connections, and the logger.
 func (s *Service) Shutdown() error {
 	const op errors.Op = "server.Service.Shutdown"
 	if s == nil {

@@ -6,11 +6,13 @@ import (
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
+	"github.com/Station-Manager/types"
 	"github.com/Station-Manager/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"reflect"
+	"time"
 )
 
 // initialize sets up the necessary components of the Service, including the container, GoFiber instance, and validator.
@@ -70,8 +72,12 @@ func (s *Service) initializeGoFiber() error {
 	}
 
 	s.app = fiber.New(fiber.Config{
-		JSONDecoder: json.Unmarshal,
-		JSONEncoder: json.Marshal,
+		AppName:      s.config.Name,
+		JSONDecoder:  json.Unmarshal,
+		JSONEncoder:  json.Marshal,
+		ReadTimeout:  time.Duration(s.config.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(s.config.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(s.config.IdleTimeout) * time.Second,
 	})
 
 	// Our middleware for basic/common request checking
@@ -120,4 +126,27 @@ func (s *Service) resolveAndSetLoggingService() (*logging.Service, error) {
 	}
 
 	return logSvc, nil
+}
+
+func (s *Service) resolveAndSetServerConfig() (types.ServerConfig, error) {
+	const op errors.Op = "server.Service.resolveConfig"
+	emptyRetVal := types.ServerConfig{}
+	if s == nil {
+		return emptyRetVal, errors.New(op).Msg(errMsgNilService)
+	}
+	obj, err := s.container.ResolveSafe(config.ServiceName)
+	if err != nil {
+		return emptyRetVal, errors.New(op).Err(err).Msg("Failed to resolve config service")
+	}
+	cfgSvc, ok := obj.(*config.Service)
+	if !ok {
+		return emptyRetVal, errors.New(op).Msg("Failed to cast config service")
+	}
+
+	svrCfg, err := cfgSvc.ServerConfig()
+	if err != nil {
+		return emptyRetVal, errors.New(op).Err(err).Msg("Failed to get server config")
+	}
+
+	return svrCfg, nil
 }
