@@ -101,7 +101,6 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	if err = tx.Commit(); err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("tx.Commit")
-		_ = tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 

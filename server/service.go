@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/Station-Manager/database"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
@@ -8,6 +9,7 @@ import (
 	"github.com/Station-Manager/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"time"
 )
 
 type requestData struct {
@@ -71,8 +73,11 @@ func (s *Service) Shutdown() error {
 		return errors.New(op).Msg(errMsgNilService)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	// Shutdown Fiber app first to stop accepting new requests
-	if err := s.app.Shutdown(); err != nil {
+	if err := s.app.ShutdownWithContext(ctx); err != nil {
 		s.logger.ErrorWith().Err(err).Msg("Failed to shutdown Fiber app")
 		return errors.New(op).Err(err).Msg("s.app.Shutdown")
 	}
