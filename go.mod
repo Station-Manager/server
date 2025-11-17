@@ -9,7 +9,7 @@ require (
 	github.com/Station-Manager/database v0.0.9
 	github.com/Station-Manager/errors v0.0.4
 	github.com/Station-Manager/iocdi v0.0.1
-	github.com/Station-Manager/logging v0.0.4
+	github.com/Station-Manager/logging v0.0.5
 	github.com/Station-Manager/types v0.0.19
 	github.com/Station-Manager/utils v0.0.2
 	github.com/go-playground/validator/v10 v10.28.0
