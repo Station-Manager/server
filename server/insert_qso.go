@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/types"
-	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -27,12 +26,20 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	var qso types.Qso
-	if err = json.Unmarshal([]byte(state.Data), &qso); err != nil {
-		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err).Msg("json.Unmarshal")
+	postReq, ok := c.Locals("postRequest").(types.PostRequest)
+	if !ok {
+		err := errors.New(op).Msg("Unable to cast locals to PostRequest")
+		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
+	if postReq.Qso == nil {
+		err := errors.New(op).Msg("QSO payload is nil")
+		s.logger.ErrorWith().Err(err)
+		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
+	}
+
+	// Work on a copy so we do not mutate the original request struct.
+	qso := *postReq.Qso
 
 	// The `station_callsign` must be set and must match the logbook's callsign.
 	if qso.StationCallsign != state.Logbook.Callsign {

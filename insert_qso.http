@@ -1,4 +1,4 @@
-### GET request to example server
+### POST request: insert QSO using new typed payload
 POST http://localhost:3000/api/v1
 Content-Type: application/json
 
@@ -6,6 +6,17 @@ Content-Type: application/json
   "callsign": "7Q5MLV",
   "key": "417bd3c26b_VJ3B-VVMF-9T7T-EHTZ-VE5V",
   "action": "insert_qso",
-  "data": "{\"call\": \"7Q7EB\", \"freq\": \"14.320\", \"qso_date\": \"20251115\", \"time_on\": \"1200\", \"time_off\": \"12:05\", \"band\": \"20m\", \"mode\": \"SSB\", \"rst_sent\": \"59\", \"rst_rcvd\": \"59\", \"station_callsign\": \"7Q5MLV\"}"
+  "qso": {
+    "call": "7Q7EB",
+    "freq": 14320000,
+    "qso_date": "20251115",
+    "time_on": "1200",
+    "time_off": "1205",
+    "band": "20m",
+    "mode": "SSB",
+    "rst_sent": "59",
+    "rst_rcvd": "59",
+    "station_callsign": "7Q5MLV"
+  }
 }
 ###

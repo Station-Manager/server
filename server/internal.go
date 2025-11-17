@@ -78,6 +78,7 @@ func (s *Service) initializeGoFiber() error {
 		ReadTimeout:  time.Duration(s.config.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(s.config.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(s.config.IdleTimeout) * time.Second,
+		BodyLimit:    s.config.BodyLimit,
 	})
 
 	// Our middleware for basic/common request checking

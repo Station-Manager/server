@@ -98,9 +98,11 @@ func (s *Service) basicChecks() fiber.Handler {
 		c.Locals(localsRequestDataKey, requestData{
 			IsValid: valid,
 			Action:  request.Action,
-			Data:    request.Data,
 			Logbook: logbook,
 		})
+
+		// Also store the full typed request for handlers that need the payload.
+		c.Locals("postRequest", request)
 
 		return c.Next()
 	}
@@ -216,8 +218,16 @@ func validatePostRequest(op errors.Op, req types.PostRequest) error {
 	if req.Callsign == emptyString {
 		return errors.New(op).Msg("Callsign is empty")
 	}
-	if req.Data == emptyString {
-		return errors.New(op).Msg("Data is empty")
+	// For action-specific payloads, enforce presence of the correct typed field.
+	switch req.Action {
+	case types.RegisterLogbookAction:
+		if req.Logbook == nil {
+			return errors.New(op).Msg("Logbook payload is missing")
+		}
+	case types.InsertQsoAction:
+		if req.Qso == nil {
+			return errors.New(op).Msg("QSO payload is missing")
+		}
 	}
 	return nil
 }
