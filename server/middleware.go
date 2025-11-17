@@ -30,7 +30,7 @@ func (s *Service) basicChecks() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 		}
 
-		// 2. Validate the request body that no fields are empty / required.
+		// 2. Validate the request body that no fields the required field exist.
 		if err := validatePostRequest(op, request); err != nil {
 			s.logger.ErrorWith().Err(err).Msg("validatePostRequest")
 			return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
@@ -52,7 +52,7 @@ func (s *Service) basicChecks() fiber.Handler {
 		// Prepare unified request context
 		rc := &requestContext{
 			Request: request,
-			IsValid: false, // will be set true after successful auth
+			IsValid: false, // will be set true after a successful authn
 		}
 
 		// 4. Check if the action requires the user's password or API key
@@ -74,6 +74,7 @@ func (s *Service) basicChecks() fiber.Handler {
 			}
 
 			if !valid {
+				s.logger.InfoWith().Str("callsign", request.Callsign).Msg("Invalid password")
 				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
 			}
 
@@ -138,7 +139,11 @@ func (s *Service) fetchUser(ctx context.Context, callsign string) (types.User, e
 		return emptyRetVal, errors.New(op).Err(err).Msg("Failed to convert model to user")
 	}
 
-	// TODO: check if the user's account has been verified.
+	if user.EmailConfirmed == false {
+		err = errors.New(op).Msg("User's email has not been verified")
+		s.logger.ErrorWith().Err(err)
+		return emptyRetVal, err
+	}
 
 	return user, nil
 }
@@ -220,7 +225,7 @@ func validatePostRequest(op errors.Op, req types.PostRequest) error {
 	if req.Callsign == emptyString {
 		return errors.New(op).Msg("Callsign is empty")
 	}
-	// For action-specific payloads, enforce presence of the correct typed field.
+	// For action-specific payloads, enforce the presence of the correct typed field.
 	switch req.Action {
 	case types.RegisterLogbookAction:
 		if req.Logbook == nil {
