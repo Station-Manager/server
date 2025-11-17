@@ -69,13 +69,17 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	if err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertLogbookWithTxContext")
-		_ = tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			s.logger.ErrorWith().Err(rbErr).Msg("Failed to rollback transaction after InsertLogbookWithTxContext error")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 	if logbook.ID == 0 {
 		wrapped := errors.New(op).Msg("Logbook ID was not set")
 		s.logger.ErrorWith().Err(wrapped)
-		_ = tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			s.logger.ErrorWith().Err(rbErr).Msg("Failed to rollback transaction after logbook ID check")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
@@ -84,7 +88,9 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	if err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("apikey.GenerateApiKey")
-		_ = tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			s.logger.ErrorWith().Err(rbErr).Msg("Failed to rollback transaction after GenerateApiKey error")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
@@ -92,7 +98,9 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	if err = s.db.InsertAPIKeyWithTxContext(ctx, tx, logbook.Callsign, prefix, hash, logbook.ID); err != nil {
 		wrapped := errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(wrapped).Msg("s.db.InsertAPIKeyWithTxContext")
-		_ = tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			s.logger.ErrorWith().Err(rbErr).Msg("Failed to rollback transaction after InsertAPIKeyWithTxContext error")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
@@ -103,5 +111,6 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// Return the full API key associated with the logbook to the caller.
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": fullKey})
 }

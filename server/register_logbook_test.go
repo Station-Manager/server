@@ -72,12 +72,26 @@ func TestRegisterLogbookRollbackOnApiKeyFailure(t *testing.T) {
 
 	// Choose a unique logbook name to check presence after rollback.
 	logbookName := "rollback_logbook_test"
-	logbookJSON := `{"name":"` + logbookName + `","callsign":"TEST1","description":"rollback scenario"}`
+
+	// Create request context with logbook payload.
+	rc := &requestContext{
+		Request: types.PostRequest{
+			Action:   types.RegisterLogbookAction,
+			Key:      "test-key",
+			Callsign: "TEST1",
+			Logbook: &types.Logbook{
+				Name:        logbookName,
+				Callsign:    "TEST1",
+				Description: "rollback scenario",
+			},
+		},
+		User:    &types.User{ID: 1},
+		IsValid: true,
+	}
 
 	// Route that primes locals and invokes the action directly.
 	svc.app.Post("/register", func(c *fiber.Ctx) error {
-		c.Locals(localsRequestDataKey, requestData{Data: logbookJSON})
-		c.Locals(localsUserDataKey, types.User{ID: 1})
+		c.Locals(localsRequestDataKey, rc)
 		return svc.registerLogbookAction(c)
 	})
 
