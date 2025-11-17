@@ -141,7 +141,7 @@ func (s *Service) fetchUser(ctx context.Context, callsign string) (types.User, e
 
 	if user.EmailConfirmed == false {
 		err = errors.New(op).Msg("User's email has not been verified")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("User email not verified")
 		return emptyRetVal, err
 	}
 

@@ -14,18 +14,18 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 	rc, err := getRequestContext(c)
 	if err != nil {
 		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
 	if rc.Logbook == nil {
 		err = errors.New(op).Msg("Logbook is nil in request context")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("Logbook is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 	if rc.Request.Qso == nil {
 		err = errors.New(op).Msg("QSO payload is nil")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("QSO payload is nil")
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 

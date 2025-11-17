@@ -21,7 +21,7 @@ func (s *Service) postDispatcherHandler() fiber.Handler {
 		ctx, err := getRequestContext(c)
 		if err != nil {
 			err = errors.New(op).Err(err)
-			s.logger.ErrorWith().Err(err)
+			s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
 			return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 		}
 

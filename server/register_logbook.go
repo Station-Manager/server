@@ -17,13 +17,13 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	rc, err := getRequestContext(c)
 	if err != nil {
 		err = errors.New(op).Err(err)
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
 	if rc.Request.Logbook == nil {
 		err = errors.New(op).Msg("Logbook payload is nil")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("Logbook payload is nil")
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
@@ -40,7 +40,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	// 3. Associate the logbook with the user. This is the only time the user data is available.
 	if rc.User == nil {
 		err := errors.New(op).Msg("User is nil in request context")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("User is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 	logbook.UserID = rc.User.ID
@@ -51,7 +51,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 	if s.db == nil {
 		err := errors.New(op).Msg("database service is nil")
-		s.logger.ErrorWith().Err(err)
+		s.logger.ErrorWith().Err(err).Msg("database service is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
@@ -76,7 +76,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 	if logbook.ID == 0 {
 		wrapped := errors.New(op).Msg("Logbook ID was not set")
-		s.logger.ErrorWith().Err(wrapped)
+		s.logger.ErrorWith().Err(wrapped).Msg("Logbook ID was not set")
 		if rbErr := tx.Rollback(); rbErr != nil {
 			s.logger.ErrorWith().Err(rbErr).Msg("Failed to rollback transaction after logbook ID check")
 		}
