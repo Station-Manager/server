@@ -18,12 +18,23 @@ type logbookCache interface {
 type logbookCacheEntry struct {
 	value     types.Logbook
 	expiresAt time.Time
+	prev      *lruNode
+	next      *lruNode
+}
+
+type lruNode struct {
+	key  int64
+	prev *lruNode
+	next *lruNode
 }
 
 type inMemoryLogbookCache struct {
 	mu         sync.RWMutex
-	entries    map[int64]logbookCacheEntry
+	entries    map[int64]*logbookCacheEntry
 	maxEntries int
+	// LRU doubly-linked list
+	head *lruNode // most recently used
+	tail *lruNode // least recently used
 }
 
 const (
@@ -33,8 +44,10 @@ const (
 
 func newInMemoryLogbookCache() *inMemoryLogbookCache {
 	return &inMemoryLogbookCache{
-		entries:    make(map[int64]logbookCacheEntry),
+		entries:    make(map[int64]*logbookCacheEntry),
 		maxEntries: defaultLogbookCacheMaxEntries,
+		head:       nil,
+		tail:       nil,
 	}
 }
 
@@ -44,18 +57,22 @@ func (c *inMemoryLogbookCache) Get(id int64) (types.Logbook, bool) {
 		return empty, false
 	}
 
-	c.mu.RLock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	entry, ok := c.entries[id]
-	c.mu.RUnlock()
 	if !ok {
 		return empty, false
 	}
 
 	if time.Now().After(entry.expiresAt) {
-		// expired; treat as miss and remove lazily
-		c.Invalidate(id)
+		// expired; treat as miss and remove
+		c.removeLocked(id)
 		return empty, false
 	}
+
+	// Move to front (most recently used)
+	c.moveToFrontLocked(entry)
 
 	return entry.value, true
 }
@@ -72,21 +89,35 @@ func (c *inMemoryLogbookCache) Set(id int64, lb types.Logbook, ttl time.Duration
 	defer c.mu.Unlock()
 
 	if c.entries == nil {
-		c.entries = make(map[int64]logbookCacheEntry)
+		c.entries = make(map[int64]*logbookCacheEntry)
 	}
 
+	// Update existing entry
+	if entry, exists := c.entries[id]; exists {
+		entry.value = lb
+		entry.expiresAt = time.Now().Add(ttl)
+		c.moveToFrontLocked(entry)
+		return
+	}
+
+	// Evict LRU entry if at capacity
 	if c.maxEntries > 0 && len(c.entries) >= c.maxEntries {
-		// Simple eviction: remove one arbitrary entry.
-		for k := range c.entries {
-			delete(c.entries, k)
-			break
+		if c.tail != nil {
+			c.removeLocked(c.tail.key)
 		}
 	}
 
-	c.entries[id] = logbookCacheEntry{
+	// Create new entry and node
+	node := &lruNode{key: id}
+	entry := &logbookCacheEntry{
 		value:     lb,
 		expiresAt: time.Now().Add(ttl),
+		prev:      node,
+		next:      node,
 	}
+
+	c.entries[id] = entry
+	c.addToFrontLocked(node)
 }
 
 func (c *inMemoryLogbookCache) Invalidate(id int64) {
@@ -96,7 +127,76 @@ func (c *inMemoryLogbookCache) Invalidate(id int64) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.removeLocked(id)
+}
+
+// removeLocked removes an entry from the cache. Must be called with lock held.
+func (c *inMemoryLogbookCache) removeLocked(id int64) {
+	entry, ok := c.entries[id]
+	if !ok {
+		return
+	}
+
+	// Remove from LRU list
+	node := entry.prev
+	if node != nil {
+		c.removeNodeLocked(node)
+	}
+
 	delete(c.entries, id)
+}
+
+// addToFrontLocked adds a node to the front (most recently used position). Must be called with lock held.
+func (c *inMemoryLogbookCache) addToFrontLocked(node *lruNode) {
+	if node == nil {
+		return
+	}
+
+	node.next = c.head
+	node.prev = nil
+
+	if c.head != nil {
+		c.head.prev = node
+	}
+	c.head = node
+
+	if c.tail == nil {
+		c.tail = node
+	}
+}
+
+// removeNodeLocked removes a node from the LRU list. Must be called with lock held.
+func (c *inMemoryLogbookCache) removeNodeLocked(node *lruNode) {
+	if node == nil {
+		return
+	}
+
+	if node.prev != nil {
+		node.prev.next = node.next
+	} else {
+		c.head = node.next
+	}
+
+	if node.next != nil {
+		node.next.prev = node.prev
+	} else {
+		c.tail = node.prev
+	}
+}
+
+// moveToFrontLocked moves an entry to the front of the LRU list. Must be called with lock held.
+func (c *inMemoryLogbookCache) moveToFrontLocked(entry *logbookCacheEntry) {
+	if entry == nil {
+		return
+	}
+
+	node := entry.prev
+	if node == nil || node == c.head {
+		return // already at front or not in list
+	}
+
+	c.removeNodeLocked(node)
+	c.addToFrontLocked(node)
 }
 
 // fetchLogbookWithCache retrieves a logbook by ID using an in-memory cache backed by the database service.

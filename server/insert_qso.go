@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/Station-Manager/errors"
-	"github.com/Station-Manager/types"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,41 +11,34 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return errors.New(op).Msg(errMsgNilContext)
 	}
 
-	state, err := getRequestData(c)
+	rc, err := getRequestContext(c)
 	if err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// Sanity check
-	if state.Logbook.ID == 0 {
-		err = errors.New(op).Msg("Logbook ID was not set")
+	if rc.Logbook == nil {
+		err = errors.New(op).Msg("Logbook is nil in request context")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
-
-	postReq, ok := c.Locals("postRequest").(types.PostRequest)
-	if !ok {
-		err := errors.New(op).Msg("Unable to cast locals to PostRequest")
-		s.logger.ErrorWith().Err(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
-	}
-	if postReq.Qso == nil {
-		err := errors.New(op).Msg("QSO payload is nil")
+	if rc.Request.Qso == nil {
+		err = errors.New(op).Msg("QSO payload is nil")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
 	// Work on a copy so we do not mutate the original request struct.
-	qso := *postReq.Qso
+	qso := *rc.Request.Qso
+	logbook := *rc.Logbook
 
 	// The `station_callsign` must be set and must match the logbook's callsign.
-	if qso.StationCallsign != state.Logbook.Callsign {
+	if qso.StationCallsign != logbook.Callsign {
 		err = errors.New(op).Msg("QSO callsign does not match the Logbook's callsign")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "QSO callsign does not match the Logbook's callsign"})
 	}
-	qso.LogbookID = state.Logbook.ID
+	qso.LogbookID = logbook.ID
 
 	// TODO: structured error codes for fields?
 	if err = s.validate.Struct(qso); err != nil {

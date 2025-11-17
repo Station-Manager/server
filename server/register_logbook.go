@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/Station-Manager/apikey"
 	"github.com/Station-Manager/errors"
-	"github.com/Station-Manager/types"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,22 +14,21 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return errors.New(op).Msg(errMsgNilContext)
 	}
 
-	// 1. Fetch the typed request from the context.
-	postReq, ok := c.Locals("postRequest").(types.PostRequest)
-	if !ok {
-		err := errors.New(op).Msg("Unable to cast locals to PostRequest")
+	rc, err := getRequestContext(c)
+	if err != nil {
+		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	if postReq.Logbook == nil {
-		err := errors.New(op).Msg("Logbook payload is nil")
+	if rc.Request.Logbook == nil {
+		err = errors.New(op).Msg("Logbook payload is nil")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
 	// Work on a copy so we do not mutate the original request struct.
-	logbook := *postReq.Logbook
+	logbook := *rc.Request.Logbook
 
 	// 2. Validate the logbook data provided by the API caller
 	if err := s.validate.Struct(logbook); err != nil {
@@ -40,13 +38,12 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	}
 
 	// 3. Associate the logbook with the user. This is the only time the user data is available.
-	user, ok := c.Locals(localsUserDataKey).(types.User)
-	if !ok {
-		err := errors.New(op).Msg("Unable to cast locals to user")
+	if rc.User == nil {
+		err := errors.New(op).Msg("User is nil in request context")
 		s.logger.ErrorWith().Err(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
-	logbook.UserID = user.ID
+	logbook.UserID = rc.User.ID
 
 	ctx := c.UserContext()
 	if ctx == nil {

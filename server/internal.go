@@ -15,25 +15,6 @@ import (
 	"time"
 )
 
-// initialize sets up the necessary components of the Service, including the container, GoFiber instance, and validator.
-func (s *Service) initialize() error {
-	const op errors.Op = "server.Service.initialize"
-	if s == nil {
-		return errors.New(op).Msg(errMsgNilService)
-	}
-	if err := s.initializeContainer(); err != nil {
-		return errors.New(op).Err(err).Msg("Failed to initialize container")
-	}
-
-	if err := s.initializeGoFiber(); err != nil {
-		return errors.New(op).Err(err).Msg("Failed to initialize goFiber")
-	}
-
-	s.validate = validator.New(validator.WithRequiredStructEnabled())
-
-	return nil
-}
-
 func (s *Service) initializeContainer() error {
 	const op errors.Op = "server.Service.initializeContainer"
 	if s == nil {
@@ -62,6 +43,33 @@ func (s *Service) initializeContainer() error {
 	if err = s.container.Build(); err != nil {
 		return errors.New(op).Err(err).Msg(err.Error())
 	}
+	return nil
+}
+
+func (s *Service) initializeService() error {
+	const op errors.Op = "server.Service.initializeService"
+	if s == nil {
+		return errors.New(op).Msg(errMsgNilService)
+	}
+
+	var err error
+	if s.db, err = s.resolveAndSetDatabaseService(); err != nil {
+		return errors.New(op).Err(err)
+	}
+
+	if s.logger, err = s.resolveAndSetLoggingService(); err != nil {
+		return errors.New(op).Err(err)
+	}
+
+	if s.config, err = s.resolveAndSetServerConfig(); err != nil {
+		return errors.New(op).Err(err)
+	}
+
+	s.validate = validator.New(validator.WithRequiredStructEnabled())
+
+	// Initialize the in-memory logbook cache with default settings.
+	s.logbookCache = newInMemoryLogbookCache()
+
 	return nil
 }
 

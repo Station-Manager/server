@@ -18,7 +18,7 @@ func (s *Service) postDispatcherHandler() fiber.Handler {
 			return errors.New(op).Msg(errMsgNilContext)
 		}
 
-		state, err := getRequestData(c)
+		ctx, err := getRequestContext(c)
 		if err != nil {
 			err = errors.New(op).Err(err)
 			s.logger.ErrorWith().Err(err)
@@ -26,12 +26,12 @@ func (s *Service) postDispatcherHandler() fiber.Handler {
 		}
 
 		// Sanity check
-		if !state.IsValid {
+		if !ctx.IsValid {
 			s.logger.InfoWith().Msg("Invalid request data")
 			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
 		}
 
-		switch state.Action {
+		switch ctx.Request.Action {
 		case types.InsertQsoAction:
 			return s.insertQsoAction(c)
 		case types.RegisterLogbookAction:

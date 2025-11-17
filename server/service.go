@@ -35,25 +35,17 @@ func NewService() (*Service, error) {
 	const op errors.Op = "server.NewService"
 	svc := &Service{}
 
-	var err error
-	if err = svc.initialize(); err != nil {
-		return nil, errors.New(op).Err(err)
+	if err := svc.initializeContainer(); err != nil {
+		return nil, errors.New(op).Err(err).Msg("Failed to initialize container")
 	}
 
-	if svc.db, err = svc.resolveAndSetDatabaseService(); err != nil {
-		return nil, errors.New(op).Err(err)
+	if err := svc.initializeService(); err != nil {
+		return nil, errors.New(op).Err(err).Msg("Failed to initialize service")
 	}
 
-	if svc.logger, err = svc.resolveAndSetLoggingService(); err != nil {
-		return nil, errors.New(op).Err(err)
+	if err := svc.initializeGoFiber(); err != nil {
+		return nil, errors.New(op).Err(err).Msg("Failed to initialize goFiber")
 	}
-
-	if svc.config, err = svc.resolveAndSetServerConfig(); err != nil {
-		return nil, errors.New(op).Err(err)
-	}
-
-	// Initialize in-memory logbook cache with default settings.
-	svc.logbookCache = newInMemoryLogbookCache()
 
 	return svc, nil
 }
