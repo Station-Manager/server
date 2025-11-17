@@ -20,6 +20,13 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// Sanity check
+	if state.Logbook.ID == 0 {
+		err = errors.New(op).Msg("Logbook ID was not set")
+		s.logger.ErrorWith().Err(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+	}
+
 	var qso types.Qso
 	if err = json.Unmarshal([]byte(state.Data), &qso); err != nil {
 		err = errors.New(op).Err(err)
@@ -28,8 +35,11 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 	}
 
 	// The `station_callsign` must be set and must match the logbook's callsign.
-
-	qso.LogbookID = state.LogbookID
+	if qso.StationCallsign != state.Logbook.Callsign {
+		err = errors.New(op).Msg("QSO callsign does not match the Logbook's callsign")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "QSO callsign does not match the Logbook's callsign"})
+	}
+	qso.LogbookID = state.Logbook.ID
 
 	// TODO: structured error codes for fields?
 	if err = s.validate.Struct(qso); err != nil {
