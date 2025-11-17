@@ -11,5 +11,4 @@ const (
 
 const (
 	localsRequestDataKey = "requestData"
-	localsUserDataKey    = "userData"
 )

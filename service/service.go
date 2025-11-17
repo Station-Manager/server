@@ -14,12 +14,12 @@ import (
 	"time"
 )
 
-type requestData struct {
-	IsValid bool
-	Action  types.RequestAction
-	Data    string
-	Logbook types.Logbook
-}
+//type requestData struct {
+//	IsValid bool
+//	Action  types.RequestAction
+//	Data    string
+//	Logbook types.Logbook
+//}
 
 type Service struct {
 	container    *iocdi.Container
