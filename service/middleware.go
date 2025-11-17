@@ -10,107 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// basicChecks performs basic/common checks on the request context, returning early if any of them fail.
-//func (s *Service) basicChecks() fiber.Handler {
-//	if s == nil {
-//		return serverErrorHandler()
-//	}
-//
-//	return func(c *fiber.Ctx) error {
-//		const op errors.Op = "server.Service.basicChecks"
-//		//if c == nil {
-//		//	return errors.New(op).Msg(errMsgNilContext)
-//		//}
-//		//
-//		//// 1. Parse request body. All valid requests have the same structure.
-//		//var request types.PostRequest
-//		//if err := c.BodyParser(&request); err != nil {
-//		//	err = errors.New(op).Err(err)
-//		//	s.logger.ErrorWith().Err(err).Msg("c.BodyParser")
-//		//	return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
-//		//}
-//		//
-//		//// 2. Validate the request body that no fields the required field exist.
-//		//if err := validatePostRequest(op, request); err != nil {
-//		//	s.logger.ErrorWith().Err(err).Msg("validatePostRequest")
-//		//	return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
-//		//}
-//		//
-//		//// 3. Check for a valid action
-//		//isValidAction, err := s.isValidAction(request.Action)
-//		//if err != nil {
-//		//	err = errors.New(op).Err(err)
-//		//	s.logger.ErrorWith().Err(err).Msg("s.isValidateAction")
-//		//	return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
-//		//}
-//		//if !isValidAction {
-//		//	err = errors.New(op).Msg("Invalid action")
-//		//	s.logger.ErrorWith().Err(err).Msg("s.isValidateAction")
-//		//	return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
-//		//}
-//		//
-//		//// Prepare unified request context
-//		//rc := &requestContext{
-//		//	Request: request,
-//		//	IsValid: false, // will be set true after a successful authn
-//		//}
-//		//
-//		//// 4. Check if the action requires the user's password or API key
-//		//// Registering a logbook requires the user's password, not the API key
-//		//// as the API key is a per-logbook key
-//		//if request.Action == types.RegisterLogbookAction {
-//		//	user, err := s.fetchUser(c.UserContext(), request.Callsign)
-//		//	if err != nil {
-//		//		err = errors.New(op).Err(err)
-//		//		s.logger.ErrorWith().Err(err).Msg("s.fetchUser")
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	valid, err := s.isValidPassword(user.PassHash, request.Key)
-//		//	if err != nil {
-//		//		err = errors.New(op).Err(err)
-//		//		s.logger.ErrorWith().Err(err).Msg("s.isValidPassword")
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	if !valid {
-//		//		s.logger.InfoWith().Str("callsign", request.Callsign).Msg("Invalid password")
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	rc.IsValid = true
-//		//	rc.User = &user
-//		//} else {
-//		//	// Validate an API key and get the associated logbook ID.
-//		//	validApiKey, logbookId, err := s.isValidApiKey(c.UserContext(), request.Key)
-//		//	if err != nil {
-//		//		err = errors.New(op).Err(err)
-//		//		s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey")
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	if !validApiKey {
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	logbook, err := s.fetchLogbookWithCache(c.UserContext(), logbookId)
-//		//	if err != nil {
-//		//		err = errors.New(op).Err(err)
-//		//		s.logger.ErrorWith().Err(err).Msg("s.fetchLogbookWithCache")
-//		//		return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-//		//	}
-//		//
-//		//	rc.IsValid = true
-//		//	rc.Logbook = &logbook
-//		//}
-//		//
-//		//// 5. Store the unified request context in locals for downstream handlers.
-//		//c.Locals(localsRequestDataKey, rc)
-//
-//		return c.Next()
-//	}
-//}
-
 // fetchUser fetches a user from the database by their callsign.
 func (s *Service) fetchUser(ctx context.Context, callsign string) (types.User, error) {
 	const op errors.Op = "server.Service.fetchUser"
@@ -213,31 +112,6 @@ func (s *Service) isValidPassword(hash, pass string) (bool, error) {
 		return false, errors.New(op).Err(err)
 	}
 	return valid, nil
-}
-
-// validatePostRequest validates the request body for a POST request.
-func validatePostRequest(op errors.Op, req types.PostRequest) error {
-	//if req.Action == emptyString {
-	//	return errors.New(op).Msg("Action is empty")
-	//}
-	//if req.Key == emptyString {
-	//	return errors.New(op).Msg("API key is empty")
-	//}
-	//if req.Callsign == emptyString {
-	//	return errors.New(op).Msg("Callsign is empty")
-	//}
-	//// For action-specific payloads, enforce the presence of the correct typed field.
-	//switch req.Action {
-	//case types.RegisterLogbookAction:
-	//	if req.Logbook == nil {
-	//		return errors.New(op).Msg("Logbook payload is missing")
-	//	}
-	//case types.InsertQsoAction:
-	//	if req.Qso == nil {
-	//		return errors.New(op).Msg("QSO payload is missing")
-	//	}
-	//}
-	return nil
 }
 
 // requestContextMiddleware sets up middleware to preprocess request context and store it in locals for downstream handlers.
