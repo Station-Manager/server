@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"context"
@@ -85,6 +85,7 @@ func (s *Service) Shutdown() error {
 	defer cancel()
 
 	// Shutdown Fiber app first to stop accepting new requests
+	// This waits for all active handlers to complete
 	if err := s.app.ShutdownWithContext(ctx); err != nil {
 		s.logger.ErrorWith().Err(err).Msg("Failed to shutdown Fiber app")
 		return errors.New(op).Err(err).Msg("s.app.Shutdown")
@@ -95,6 +96,11 @@ func (s *Service) Shutdown() error {
 		s.logger.ErrorWith().Err(err).Msg("Failed to close database")
 		return errors.New(op).Err(err).Msg("s.db.Close")
 	}
+
+	// Wait for any in-flight log operations to complete
+	// This is necessary because Fiber handler goroutines may have deferred
+	// log cleanup that executes after the handler returns
+	time.Sleep(100 * time.Millisecond)
 
 	// Close logger last
 	if err := s.logger.Close(); err != nil {

@@ -1,4 +1,4 @@
-package server
+package service
 
 const (
 	errMsgNilService = "Server service is nil."

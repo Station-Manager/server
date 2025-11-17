@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Station-Manager/config"
 	"github.com/Station-Manager/errors"
-	"github.com/Station-Manager/server/server"
+	"github.com/Station-Manager/server/service"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -23,7 +23,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	svc, err := server.NewService()
+	svc, err := service.NewService()
 	if err != nil {
 		dErr, ok := errors.AsDetailedError(err)
 		if !ok {
@@ -47,6 +47,8 @@ func main() {
 			log.Printf("Shutdown failed: %v\n", err)
 			os.Exit(1)
 		}
+		// Wait for the Start() goroutine to complete after shutdown
+		<-errChan
 	case err := <-errChan:
 		// Server error occurred
 		if err != nil {

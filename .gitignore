@@ -1,5 +1,4 @@
 copilot.*
 config.json
 logs
-cache*
 coverage*
