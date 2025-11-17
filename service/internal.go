@@ -79,6 +79,8 @@ func (s *Service) initializeService() error {
 	return nil
 }
 
+// initializeGoFiber initializes the Fiber application with configurations defined in the Service struct.
+// Returns an error if the Service instance is nil or configuration fails.
 func (s *Service) initializeGoFiber() error {
 	const op errors.Op = "server.Service.initializeGoFiber"
 	if s == nil {
@@ -100,12 +102,17 @@ func (s *Service) initializeGoFiber() error {
 	return nil
 }
 
+// initializeRoutes configures API route groups and handlers for the service with associated middleware.
 func (s *Service) initializeRoutes() {
+	// The base API group with common middleware applied to all routes.
 	api := s.app.Group("/api", s.requestContextMiddleware())
 
+	// The logbook routes require password authentication as a minimum because
+	// API keys are per-logbook and not shared across users.
 	logbookRoutes := api.Group("/logbook", s.passwordAuthNMiddleware())
 	logbookRoutes.Post("/register", s.registerLogbookHandler)
 
+	// The QSO routes require an API key authentication.
 	qsoRoutes := api.Group("/qso", s.apikeyAuthNMiddleware())
 	qsoRoutes.Post("/insert", s.insertQsoHandler)
 }

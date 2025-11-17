@@ -5,33 +5,31 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (s *Service) insertQsoAction(c *fiber.Ctx) error {
-	const op errors.Op = "server.Service.insertQSOAction"
-	if c == nil {
-		return errors.New(op).Msg(errMsgNilContext)
-	}
+// insertQsoHandler processes a request to insert a QSO into the database and performs necessary validation and error handling.
+func (s *Service) insertQsoHandler(c *fiber.Ctx) error {
+	const op errors.Op = "server.Service.insertQsoHandler"
 
-	rc, err := getRequestContext(c)
+	reqCtx, err := getRequestContext(c)
 	if err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	if rc.Logbook == nil {
+	if reqCtx.Logbook == nil {
 		err = errors.New(op).Msg("Logbook is nil in request context")
 		s.logger.ErrorWith().Err(err).Msg("Logbook is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
-	if rc.Request.Qso == nil {
+	if reqCtx.Request.Qso == nil {
 		err = errors.New(op).Msg("QSO payload is nil")
 		s.logger.ErrorWith().Err(err).Msg("QSO payload is nil")
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
 	// Work on a copy so we do not mutate the original request struct.
-	qso := *rc.Request.Qso
-	logbook := *rc.Logbook
+	qso := *reqCtx.Request.Qso
+	logbook := *reqCtx.Logbook
 
 	// The `station_callsign` must be set and must match the logbook's callsign.
 	if qso.StationCallsign != logbook.Callsign {
@@ -51,15 +49,6 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("InsertQso failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "QSO Created"})
-}
-
-func (s *Service) insertQsoHandler(c *fiber.Ctx) error {
-	const op errors.Op = "server.Service.insertQsoHandler"
-	if c == nil {
-		return errors.New(op).Msg(errMsgNilContext)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "QSO Created"})

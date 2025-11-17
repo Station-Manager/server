@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/Station-Manager/adapters"
 	"github.com/Station-Manager/adapters/converters/common"
 	"github.com/Station-Manager/apikey"
@@ -281,6 +280,8 @@ func (s *Service) requestContextMiddleware() fiber.Handler {
 	}
 }
 
+// apikeyAuthNMiddleware verifies API keys for incoming requests, fetches related logbook data, and updates the request context.
+// It handles errors related to authentication, validation, and logbook retrieval, responding with appropriate HTTP status codes.
 func (s *Service) apikeyAuthNMiddleware() fiber.Handler {
 	const op errors.Op = "server.Service.apikeyMiddleware"
 	if s == nil {
@@ -288,47 +289,47 @@ func (s *Service) apikeyAuthNMiddleware() fiber.Handler {
 	}
 
 	return func(c *fiber.Ctx) error {
+		// 1. Fetch unified request context from locals.
+		reqCtx, err := getRequestContext(c)
+		if err != nil {
+			err = errors.New(op).Err(err)
+			s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
+			return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
+		}
 
-		fmt.Println("apikeyAuthNMiddleware")
+		// Validate an API key and get the associated logbook ID.
+		validApiKey, logbookId, err := s.isValidApiKey(c.UserContext(), reqCtx.Request.Key)
+		if err != nil {
+			err = errors.New(op).Err(err)
+			s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey failed")
+			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+		}
 
-		//reqCtx, err := getRequestContext(c)
-		//if err != nil {
-		//	err = errors.New(op).Err(err)
-		//	s.logger.ErrorWith().Err(err).Msg("getRequestContext failed")
-		//	return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
-		//}
-		//
-		//// 3. Validate an API key and get the associated logbook ID.
-		//validApiKey, logbookId, err := s.isValidApiKey(c.UserContext(), reqCtx.Request.Key)
-		//if err != nil {
-		//	err = errors.New(op).Err(err)
-		//	s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey")
-		//	return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-		//}
-		//
-		//if !validApiKey {
-		//	s.logger.InfoWith().Str("callsign", reqCtx.Request.Callsign).Msg("Invalid API key")
-		//	return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-		//}
-		//
-		//// 4. Fetch the logbook associated with the API key.
-		//logbook, err := s.fetchLogbookWithCache(c.UserContext(), logbookId)
-		//if err != nil {
-		//	err = errors.New(op).Err(err)
-		//	s.logger.ErrorWith().Err(err).Msg("s.fetchLogbookWithCache")
-		//	return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
-		//}
-		//
-		//reqCtx.IsValid = validApiKey
-		//reqCtx.Logbook = &logbook
-		//
-		//// 5. Store the unified request context in locals for downstream handlers.
-		//c.Locals(localsRequestDataKey, reqCtx)
+		if !validApiKey {
+			s.logger.InfoWith().Str("callsign", reqCtx.Request.Callsign).Msg("Invalid API key")
+			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+		}
+
+		reqCtx.IsValid = validApiKey
+
+		logbook, err := s.fetchLogbookWithCache(c.UserContext(), logbookId)
+		if err != nil {
+			err = errors.New(op).Err(err)
+			s.logger.ErrorWith().Err(err).Msg("s.fetchLogbookWithCache failed")
+			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+		}
+
+		reqCtx.Logbook = &logbook
+
+		// The API key is no longer needed after a successful authn.
+		// This prevents accidental leakage further down-stream.
+		reqCtx.Request.Key = ""
 
 		return c.Next()
 	}
 }
 
+// passwordAuthNMiddleware authenticates a user by checking their password against the database.
 func (s *Service) passwordAuthNMiddleware() fiber.Handler {
 	const op errors.Op = "server.Service.passwordAuthNMiddleware"
 	if s == nil {
@@ -355,6 +356,11 @@ func (s *Service) passwordAuthNMiddleware() fiber.Handler {
 		if err != nil {
 			err = errors.New(op).Err(err)
 			s.logger.ErrorWith().Err(err).Msg("s.isValidPassword failed")
+			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+		}
+
+		if !validPass {
+			s.logger.InfoWith().Str("callsign", reqCtx.Request.Callsign).Msg("Invalid password")
 			return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
 		}
 
