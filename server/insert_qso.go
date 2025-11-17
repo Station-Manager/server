@@ -27,6 +27,8 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// The `station_callsign` must be set and must match the logbook's callsign.
+
 	qso.LogbookID = state.LogbookID
 
 	// TODO: structured error codes for fields?

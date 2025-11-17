@@ -148,5 +148,7 @@ func (s *Service) resolveAndSetServerConfig() (types.ServerConfig, error) {
 		return emptyRetVal, errors.New(op).Err(err).Msg("Failed to get server config")
 	}
 
+	//TODO: Config validation
+
 	return svrCfg, nil
 }

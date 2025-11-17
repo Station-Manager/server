@@ -14,19 +14,20 @@ import (
 )
 
 type requestData struct {
-	IsValid   bool
-	Action    types.RequestAction
-	Data      string
-	LogbookID int64
+	IsValid bool
+	Action  types.RequestAction
+	Data    string
+	Logbook types.Logbook
 }
 
 type Service struct {
-	container *iocdi.Container
-	db        *database.Service
-	logger    *logging.Service
-	config    types.ServerConfig
-	app       *fiber.App
-	validate  *validator.Validate
+	container    *iocdi.Container
+	db           *database.Service
+	logger       *logging.Service
+	config       types.ServerConfig
+	app          *fiber.App
+	validate     *validator.Validate
+	logbookCache logbookCache
 }
 
 // NewService creates a new server instance and initializes all its dependencies.
@@ -50,6 +51,9 @@ func NewService() (*Service, error) {
 	if svc.config, err = svc.resolveAndSetServerConfig(); err != nil {
 		return nil, errors.New(op).Err(err)
 	}
+
+	// Initialize in-memory logbook cache with default settings.
+	svc.logbookCache = newInMemoryLogbookCache()
 
 	return svc, nil
 }

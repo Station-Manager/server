@@ -36,7 +36,7 @@ func (s *Service) basicChecks() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 		}
 
-		// 4. Check for a valid action
+		// 3. Check for a valid action
 		isValidAction, err := s.isValidAction(request.Action)
 		if err != nil {
 			err = errors.New(op).Err(err)
@@ -49,8 +49,9 @@ func (s *Service) basicChecks() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 		}
 
+		// 4. Check if the action requires the user's password or API key
 		var valid bool
-		var logbookId int64
+		var logbook types.Logbook
 		// Registering a logbook requires the user's password, not the api key
 		// as the api key is a per-logbook key
 		if request.Action == types.RegisterLogbookAction {
@@ -70,19 +71,35 @@ func (s *Service) basicChecks() fiber.Handler {
 			// This is only needed when registering a logbook
 			c.Locals(localsUserDataKey, user)
 		} else {
-			if valid, logbookId, err = s.isValidApiKey(c.UserContext(), request.Key); err != nil {
+			// Validate an API key and get the associated logbook ID.
+			validApiKey, logbookId, err := s.isValidApiKey(c.UserContext(), request.Key)
+			if err != nil {
 				err = errors.New(op).Err(err)
 				s.logger.ErrorWith().Err(err).Msg("s.isValidApiKey")
+				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+			}
+
+			if !validApiKey {
+				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
+			}
+
+			valid = validApiKey
+
+			// Load the logbook from the cache or database and store it in the context for downstream handlers.
+			logbook, err = s.fetchLogbookWithCache(c.UserContext(), logbookId)
+			if err != nil {
+				err = errors.New(op).Err(err)
+				s.logger.ErrorWith().Err(err).Msg("s.fetchLogbookWithCache")
 				return c.Status(fiber.StatusUnauthorized).JSON(jsonUnauthorized)
 			}
 		}
 
 		// 5. Store the request data in the context
 		c.Locals(localsRequestDataKey, requestData{
-			IsValid:   valid,
-			Action:    request.Action,
-			Data:      request.Data,
-			LogbookID: logbookId,
+			IsValid: valid,
+			Action:  request.Action,
+			Data:    request.Data,
+			Logbook: logbook,
 		})
 
 		return c.Next()
@@ -154,7 +171,6 @@ func (s *Service) isValidApiKey(ctx context.Context, fullKey string) (bool, int6
 		return false, 0, errors.New(op).Err(err)
 	}
 
-	// TODO: context aware call
 	model, err := s.db.FetchAPIKeyByPrefixContext(ctx, prefix)
 	if err != nil {
 		return false, 0, errors.New(op).Err(err)

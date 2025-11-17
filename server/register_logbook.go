@@ -8,12 +8,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// registerLogbookAction processes the creation of a user logbook, validates input, and generates an API key within a transaction.
+// It extracts data from the request, validates it, assigns user ownership, and interacts with the database for persistence.
 func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 	const op errors.Op = "server.Service.registerLogbookAction"
 	if c == nil {
 		return errors.New(op).Msg(errMsgNilContext)
 	}
 
+	// 1. Fetch the data from the request.
 	reqData, ok := c.Locals(localsRequestDataKey).(requestData)
 	if !ok {
 		err := errors.New(op).Msg("Unable to cast locals to requestData")
@@ -21,6 +24,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
+	// Ignore the logbook Field in the requestData and read the Data field instead.
 	var logbook types.Logbook
 	if err := json.Unmarshal([]byte(reqData.Data), &logbook); err != nil {
 		err = errors.New(op).Err(err)
@@ -28,14 +32,14 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// 1. Validate the logbook data
+	// 2. Validate the logbook data provided by the API caller
 	if err := s.validate.Struct(logbook); err != nil {
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(jsonBadRequest)
 	}
 
-	// 2. Associated the logbook with the user.
+	// 3. Associated the logbook with the user. This is the only time the user data is available.
 	user, ok := c.Locals(localsUserDataKey).(types.User)
 	if !ok {
 		err := errors.New(op).Msg("Unable to cast locals to user")
@@ -54,7 +58,7 @@ func (s *Service) registerLogbookAction(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
 	}
 
-	// Begin the transaction for atomic logbook + API key creation.
+	// 4. Begin the transaction for atomic logbook + API key creation.
 	tx, txCancel, err := s.db.BeginTxContext(ctx)
 	if err != nil {
 		wrapped := errors.New(op).Err(err)
