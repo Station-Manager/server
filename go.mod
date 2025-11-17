@@ -5,16 +5,17 @@ go 1.25
 require (
 	github.com/Station-Manager/adapters v0.0.9
 	github.com/Station-Manager/apikey v0.0.4
-	github.com/Station-Manager/config v0.0.7
+	github.com/Station-Manager/config v0.0.8
 	github.com/Station-Manager/database v0.0.9
 	github.com/Station-Manager/errors v0.0.4
 	github.com/Station-Manager/iocdi v0.0.1
 	github.com/Station-Manager/logging v0.0.4
-	github.com/Station-Manager/types v0.0.18
+	github.com/Station-Manager/types v0.0.19
 	github.com/Station-Manager/utils v0.0.2
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/rs/zerolog v1.34.0
 )
 
 require (
@@ -46,7 +47,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.68.0 // indirect
