@@ -55,3 +55,12 @@ func (s *Service) insertQsoAction(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "QSO Created"})
 }
+
+func (s *Service) insertQsoHandler(c *fiber.Ctx) error {
+	const op errors.Op = "server.Service.insertQsoHandler"
+	if c == nil {
+		return errors.New(op).Msg(errMsgNilContext)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "QSO Created"})
+}

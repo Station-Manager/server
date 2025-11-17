@@ -5,7 +5,6 @@ import (
 	"github.com/Station-Manager/config"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/server/service"
-	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -44,7 +43,7 @@ func main() {
 		// Signal received, initiate graceful shutdown
 		stop() // Stop receiving more signals
 		if err := svc.Shutdown(); err != nil {
-			log.Printf("Shutdown failed: %v\n", err)
+			//log.Printf("Shutdown failed: %v\n", err)
 			os.Exit(1)
 		}
 		// Wait for the Start() goroutine to complete after shutdown

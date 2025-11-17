@@ -15,6 +15,9 @@ import (
 	"time"
 )
 
+// initializeContainer sets up the dependency injection container with required service registrations and configurations.
+// It registers key service instances and ensures the container is built successfully.
+// Returns an error if the initialization process encounters any issues.
 func (s *Service) initializeContainer() error {
 	const op errors.Op = "server.Service.initializeContainer"
 	if s == nil {
@@ -46,6 +49,9 @@ func (s *Service) initializeContainer() error {
 	return nil
 }
 
+// initializeService sets up and initializes the service dependencies including database, logger, configuration, and validators.
+// It ensures that essential services are resolved and configured properly before the service becomes operational.
+// Returns an error if any component fails during initialization.
 func (s *Service) initializeService() error {
 	const op errors.Op = "server.Service.initializeService"
 	if s == nil {
@@ -89,16 +95,19 @@ func (s *Service) initializeGoFiber() error {
 		BodyLimit:    s.config.BodyLimit,
 	})
 
-	// Our middleware for basic/common request checking
-	s.app.Use(s.basicChecks())
-
-	// Our base route
-	apiRoutes := s.app.Group("/api/v1")
-
-	// Every request goes to the dispatcherHandler.
-	apiRoutes.Post("/", s.postDispatcherHandler())
+	s.initializeRoutes()
 
 	return nil
+}
+
+func (s *Service) initializeRoutes() {
+	api := s.app.Group("/api", s.requestContextMiddleware())
+
+	logbookRoutes := api.Group("/logbook", s.passwordAuthNMiddleware())
+	logbookRoutes.Post("/register", s.registerLogbookHandler)
+
+	qsoRoutes := api.Group("/qso", s.apikeyAuthNMiddleware())
+	qsoRoutes.Post("/insert", s.insertQsoHandler)
 }
 
 func (s *Service) resolveAndSetDatabaseService() (*database.Service, error) {

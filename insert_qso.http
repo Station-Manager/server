@@ -1,14 +1,13 @@
 ### POST request: insert QSO using new typed payload
-POST http://localhost:3000/api/v1
+POST http://localhost:3000/api/qso/insert
 Content-Type: application/json
 
 {
   "callsign": "7Q5MLV",
-  "key": "417bd3c26b_VJ3B-VVMF-9T7T-EHTZ-VE5V",
-  "action": "insert_qso",
+  "key": "ecdbf802eb_KP77-72A2-X3WB-C38A-SK3E",
   "qso": {
     "call": "7Q7EB",
-    "freq": 14320000,
+    "freq": "14.320",
     "qso_date": "20251115",
     "time_on": "1200",
     "time_off": "1205",

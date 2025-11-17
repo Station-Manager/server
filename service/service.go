@@ -10,16 +10,13 @@ import (
 	"github.com/Station-Manager/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"log"
+	"os"
 	"time"
 )
 
-//type requestData struct {
-//	IsValid bool
-//	Action  types.RequestAction
-//	Data    string
-//	Logbook types.Logbook
-//}
+func init() {
+	_ = os.Setenv("SM_DEFAULT_DB", "pg")
+}
 
 type Service struct {
 	container    *iocdi.Container
@@ -103,30 +100,31 @@ func (s *Service) Shutdown() error {
 	// 1. Fiber handler goroutines may have deferred log cleanup
 	// 2. Migrations/startup logs may still be writing to disk
 	// Instead of a fixed sleep, we poll the active operations counter
-	waitStart := time.Now()
-	maxWait := 2 * time.Second
-	lastOps := s.logger.ActiveOperations()
-	for time.Since(waitStart) < maxWait {
-		currentOps := s.logger.ActiveOperations()
-		if currentOps == 0 {
-			break
-		}
-		// Debug: Print if operations count changes
-		if currentOps != lastOps {
-			log.Printf("Waiting for log operations: %d active (elapsed: %v)", currentOps, time.Since(waitStart))
-			lastOps = currentOps
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	finalOps := s.logger.ActiveOperations()
-	if finalOps > 0 {
-		log.Printf("WARNING: Logger still has %d active operations after %v wait", finalOps, time.Since(waitStart))
-	}
+	//waitStart := time.Now()
+	//maxWait := 2 * time.Second
+	//lastOps := s.logger.ActiveOperations()
+	//for time.Since(waitStart) < maxWait {
+	//	currentOps := s.logger.ActiveOperations()
+	//	if currentOps == 0 {
+	//		break
+	//	}
+	//	// Debug: Print if operations count changes
+	//	if currentOps != lastOps {
+	//		log.Printf("Waiting for log operations: %d active (elapsed: %v)", currentOps, time.Since(waitStart))
+	//		lastOps = currentOps
+	//	}
+	//	time.Sleep(10 * time.Millisecond)
+	//}
+	//finalOps := s.logger.ActiveOperations()
+	//if finalOps > 0 {
+	//	log.Printf("WARNING: Logger still has %d active operations after %v wait", finalOps, time.Since(waitStart))
+	//}
 
+	//	s.logger.Wait()
 	// Close logger last
-	if err := s.logger.Close(); err != nil {
-		return errors.New(op).Err(err).Msg("s.logger.Close")
-	}
+	//	if err := s.logger.Close(); err != nil {
+	//		return errors.New(op).Err(err).Msg("s.logger.Close")
+	//	}
 
 	return nil
 }

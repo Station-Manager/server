@@ -1,11 +1,10 @@
 ### POST request: register first logbook using new typed payload
-POST http://localhost:3000/api/v1
+POST http://localhost:3000/api/logbook/register
 Content-Type: application/json
 
 {
   "callsign": "7Q5MLV",
   "key": "1q2w3e4r",
-  "action": "register_logbook",
   "logbook": {
     "name": "Default HF",
     "callsign": "7Q5MLV",

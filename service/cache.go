@@ -222,7 +222,7 @@ func (s *Service) fetchLogbookWithCache(ctx context.Context, logbookID int64) (t
 		}
 	}
 
-	// 2. Fallback to database.
+	// 2. Fallback to database - logbooks table
 	logbook, err := s.db.FetchLogbookByIDContext(ctx, logbookID)
 	if err != nil {
 		return emptyRetVal, errors.New(op).Err(err)
