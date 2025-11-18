@@ -42,6 +42,7 @@ const (
 	defaultLogbookCacheMaxEntries = 1024            //TODO: make configurable
 )
 
+// newInMemoryLogbookCache initializes and returns a new in-memory logbook cache with default settings.
 func newInMemoryLogbookCache() *inMemoryLogbookCache {
 	return &inMemoryLogbookCache{
 		entries:    make(map[int64]*logbookCacheEntry),
@@ -71,7 +72,7 @@ func (c *inMemoryLogbookCache) Get(id int64) (types.Logbook, bool) {
 		return empty, false
 	}
 
-	// Move to front (most recently used)
+	// Move to the front (most recently used)
 	c.moveToFrontLocked(entry)
 
 	return entry.value, true
@@ -107,7 +108,7 @@ func (c *inMemoryLogbookCache) Set(id int64, lb types.Logbook, ttl time.Duration
 		}
 	}
 
-	// Create new entry and node
+	// Create a new entry and node
 	node := &lruNode{key: id}
 	entry := &logbookCacheEntry{
 		value:     lb,
@@ -192,7 +193,7 @@ func (c *inMemoryLogbookCache) moveToFrontLocked(entry *logbookCacheEntry) {
 
 	node := entry.prev
 	if node == nil || node == c.head {
-		return // already at front or not in list
+		return // already at the front or not in the list
 	}
 
 	c.removeNodeLocked(node)
@@ -207,9 +208,6 @@ func (s *Service) fetchLogbookWithCache(ctx context.Context, logbookID int64) (t
 
 	if s == nil {
 		return emptyRetVal, errors.New(op).Msg(errMsgNilService)
-	}
-	if ctx == nil {
-		return emptyRetVal, errors.New(op).Msg(errMsgNilContext)
 	}
 	if logbookID == 0 {
 		return emptyRetVal, errors.New(op).Msg("logbookID is zero")

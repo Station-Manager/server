@@ -13,11 +13,10 @@ type requestContext struct {
 	IsValid bool
 }
 
+// getRequestContext retrieves the `requestContext` from the Fiber context's local storage.
+// Returns an error if the local data cannot be cast to `*requestContext` or if it is nil.
 func getRequestContext(c *fiber.Ctx) (*requestContext, error) {
 	const op errors.Op = "server.Service.getRequestContext"
-	if c == nil {
-		return nil, errors.New(op).Msg(errMsgNilContext)
-	}
 	ctx, ok := c.Locals(localsRequestDataKey).(*requestContext)
 	if !ok || ctx == nil {
 		return nil, errors.New(op).Msg("Unable to cast locals to *requestContext")

@@ -66,9 +66,6 @@ func (s *Service) isValidAction(action types.RequestAction) (bool, error) {
 // Returns the logbook ID if the key is valid.
 func (s *Service) isValidApiKey(ctx context.Context, fullKey string) (bool, int64, error) {
 	const op errors.Op = "server.Service.isValidApiKey"
-	if ctx == nil {
-		return false, 0, errors.New(op).Msg(errMsgNilContext)
-	}
 
 	if fullKey == emptyString {
 		return false, 0, errors.New(op).Msg("API key is empty")
