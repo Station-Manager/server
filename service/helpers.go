@@ -1,9 +1,11 @@
 package service
 
 import (
+	stderr "errors"
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/types"
 	"github.com/gofiber/fiber/v2"
+	"github.com/lib/pq"
 )
 
 type requestContext struct {
@@ -22,4 +24,21 @@ func getRequestContext(c *fiber.Ctx) (*requestContext, error) {
 		return nil, errors.New(op).Msg("Unable to cast locals to *requestContext")
 	}
 	return ctx, nil
+}
+
+func postgresError(err error) (string, bool) {
+
+	var pgErr *pq.Error
+	if stderr.As(err, &pgErr) {
+		// pgErr.Code is the SQLSTATE, e.g. "23505" for unique_violation
+		if pgErr != nil {
+			switch pgErr.Code {
+			case "23505":
+				return "Duplicate", true
+			default:
+				// handle other PG errors
+			}
+		}
+	}
+	return "", false
 }

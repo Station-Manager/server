@@ -4,13 +4,13 @@ Content-Type: application/json
 
 {
   "callsign": "7Q5MLV",
-  "key": "ecdbf802eb_KP77-72A2-X3WB-C38A-SK3E",
+  "key": "2bb8011139_KCQF-AR78-H442-S3Z9-UVEP",
   "qso": {
     "call": "7Q7EB",
     "freq": "14.320",
     "qso_date": "20251115",
-    "time_on": "1200",
-    "time_off": "1205",
+    "time_on": "1206",
+    "time_off": "1207",
     "band": "20m",
     "mode": "SSB",
     "rst_sent": "59",

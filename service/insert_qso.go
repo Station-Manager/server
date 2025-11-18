@@ -46,6 +46,10 @@ func (s *Service) insertQsoHandler(c *fiber.Ctx) error {
 	}
 
 	if qso, err = s.db.InsertQsoContext(c.UserContext(), qso); err != nil {
+		msg, is := postgresError(err)
+		if is {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": msg})
+		}
 		err = errors.New(op).Err(err)
 		s.logger.ErrorWith().Err(err).Msg("InsertQso failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(jsonInternalError)
