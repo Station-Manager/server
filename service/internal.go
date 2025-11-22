@@ -6,11 +6,14 @@ import (
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
+	"github.com/Station-Manager/server/service/template"
 	"github.com/Station-Manager/types"
 	"github.com/Station-Manager/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"reflect"
 	"time"
 )
@@ -97,6 +100,12 @@ func (s *Service) initializeGoFiber() error {
 		BodyLimit:    s.config.BodyLimit,
 	})
 
+	s.app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "*",
+		AllowMethods: "GET,POST",
+	}))
+
 	s.initializeRoutes()
 
 	return nil
@@ -104,6 +113,12 @@ func (s *Service) initializeGoFiber() error {
 
 // initializeRoutes configures API route groups and handlers for the service with associated middleware.
 func (s *Service) initializeRoutes() {
+	s.app.Get("/", filesystem.New(filesystem.Config{
+		Root:         template.FrontendFS(),
+		Index:        "index.html",
+		NotFoundFile: "index.html",
+	}))
+
 	// The base API group with common middleware applied to all routes.
 	api := s.app.Group("/api", s.requestContextMiddleware())
 
