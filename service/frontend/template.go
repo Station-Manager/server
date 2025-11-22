@@ -1,4 +1,4 @@
-package template
+package frontend
 
 import (
 	"embed"
@@ -9,7 +9,7 @@ import (
 //go:embed all:dist
 var content embed.FS
 
-func FrontendFS() http.FileSystem {
+func FileSystem() http.FileSystem {
 	pub, err := fs.Sub(content, "dist")
 	if err != nil {
 		panic(err)

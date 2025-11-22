@@ -6,7 +6,7 @@ import (
 	"github.com/Station-Manager/errors"
 	"github.com/Station-Manager/iocdi"
 	"github.com/Station-Manager/logging"
-	"github.com/Station-Manager/server/service/template"
+	"github.com/Station-Manager/server/service/frontend"
 	"github.com/Station-Manager/types"
 	"github.com/Station-Manager/utils"
 	"github.com/go-playground/validator/v10"
@@ -114,7 +114,7 @@ func (s *Service) initializeGoFiber() error {
 // initializeRoutes configures API route groups and handlers for the service with associated middleware.
 func (s *Service) initializeRoutes() {
 	s.app.Get("/", filesystem.New(filesystem.Config{
-		Root:         template.FrontendFS(),
+		Root:         frontend.FileSystem(),
 		Index:        "index.html",
 		NotFoundFile: "index.html",
 	}))
