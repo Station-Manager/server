@@ -10,7 +10,7 @@ func serverErrorHandler() fiber.Handler {
 	}
 }
 
-// healthHandler returns a simple health status. It can be extended to include more checks.
+// healthHandler returns a simple health status.
 func (s *Service) healthHandler(c *fiber.Ctx) error {
 	// Default to unhealthy; update to healthy on success
 	status := "ok"
