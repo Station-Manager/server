@@ -50,8 +50,11 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
   echo "Initializing PostgreSQL data directory at $PGDATA"
   su-exec postgres initdb -D "$PGDATA"
 
-  # Configure PostgreSQL to listen on all interfaces and trust local connections
+  # Configure PostgreSQL to listen on all interfaces
   echo "listen_addresses = '*'" >> "$PGDATA/postgresql.conf"
+
+  # Allow password auth for this DB/user from any IPv4 host (dev convenience)
+  echo "host    $POSTGRES_DB    $POSTGRES_USER    0.0.0.0/0    md5" >> "$PGDATA/pg_hba.conf"
 
   # Start postgres for bootstrap
   su-exec postgres pg_ctl -D "$PGDATA" -w start
