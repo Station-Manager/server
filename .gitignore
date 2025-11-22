@@ -2,5 +2,6 @@ copilot.*
 config.json
 logs
 coverage*
-service/frontend/.node_modules
+service/frontend/node_modules
 service/frontend/.svelte-kit
+service/frontend/dist
