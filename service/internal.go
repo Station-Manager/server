@@ -119,6 +119,9 @@ func (s *Service) initializeRoutes() {
 		NotFoundFile: "index.html",
 	}))
 
+	// Health check endpoint - lightweight liveness/readiness probe
+	s.app.Get("/health", s.healthHandler)
+
 	// The base API group with common middleware applied to all routes.
 	api := s.app.Group("/api", s.requestContextMiddleware())
 
