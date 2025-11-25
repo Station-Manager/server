@@ -23,9 +23,6 @@ import (
 // Returns an error if the initialization process encounters any issues.
 func (s *Service) initializeContainer() error {
 	const op errors.Op = "server.Service.initializeContainer"
-	if s == nil {
-		return errors.New(op).Msg(errMsgNilService)
-	}
 
 	s.container = iocdi.New()
 
