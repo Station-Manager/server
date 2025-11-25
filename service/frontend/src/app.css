@@ -2,6 +2,6 @@
 
 @layer container {
     html {
-        @apply text-gray-900;
+        @apply text-gray-200;
     }
 }

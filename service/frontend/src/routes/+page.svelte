@@ -1,6 +1,9 @@
 <script lang="ts">
 </script>
 
-<div class="border border-gray-300 p-4">
-We are here!
+<div class="flex flex-row">
+    <div class="w-1/4">Col 1</div>
+    <div>
+        <h2>Station Manager</h2>
+    </div>
 </div>

@@ -36,6 +36,8 @@
     "vitest": "^4.0.10",
     "vitest-browser-svelte": "^2.0.1"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "lucia": "^3.2.2"
+  }
 }
-
