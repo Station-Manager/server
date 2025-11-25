@@ -1,4 +1,6 @@
-# Station Manager — Server (High‑level)
+# Station Manager: server package
+
+## Server (High‑level)
 
 This document describes, at a high level, how the server handles logbook registration, API key issuance, request authentication/authorisation, and data integrity for QSO uploads. It mirrors the platform‑wide design used by the `apikey` package and avoids implementation details.
 
