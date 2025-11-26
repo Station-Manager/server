@@ -54,9 +54,6 @@ func newInMemoryLogbookCache() *inMemoryLogbookCache {
 
 func (c *inMemoryLogbookCache) Get(id int64) (types.Logbook, bool) {
 	var empty types.Logbook
-	if c == nil {
-		return empty, false
-	}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()

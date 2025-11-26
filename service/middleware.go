@@ -14,9 +14,7 @@ import (
 func (s *Service) fetchUser(ctx context.Context, callsign string) (types.User, error) {
 	const op errors.Op = "server.Service.fetchUser"
 	emptyRetVal := types.User{}
-	if s == nil {
-		return emptyRetVal, errors.New(op).Msg(errMsgNilService)
-	}
+
 	if callsign == emptyString {
 		return emptyRetVal, errors.New(op).Msg("Callsign is empty")
 	}
